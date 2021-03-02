@@ -1,5 +1,5 @@
 <div class="toolbar" ng-if="!preview && !searching">
-  <button class="btn btn-default" ng-click="refresh()" title="Refresh">
+  <button class="btn btn-default" ng-click="refresh()" title="刷新">
     <i class="glyphicon glyphicon-refresh"></i>
   </button>
 
@@ -141,15 +141,15 @@
       <table>
         <tbody ng-if="!previewAllHeaders">
           <tr>
-            <th>From</th>
+            <th>发件人</th>
             <td>{{ tryDecodeMime(preview.Content.Headers["From"][0] || preview.From.Mailbox + "@" + preview.From.Domain) }}</td>
           </tr>
           <tr>
-            <th>Subject</th>
+            <th>主题</th>
             <td><strong>{{ tryDecodeMime(preview.Content.Headers["Subject"][0]) }}</strong></td>
           </tr>
           <tr>
-            <th>To</th>
+            <th>收件人</th>
             <td>
               {{ tryDecodeMime((preview.Content.Headers["To"] || []).join(', ') || preview.To[0].Mailbox + "@" + preview.To[0].Domain) }}
             </td>
