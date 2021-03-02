@@ -167,11 +167,11 @@ mailhogApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.createNotification = function(message) {
-    var title = "Mail from " + $scope.getSender(message);
+    var title = "新测试邮件到达：" + $scope.getSender(message);
     var options = {
       body: $scope.tryDecodeMime(message.Content.Headers["Subject"][0]),
-      tag: "MailHog",
-      icon: "images/hog.png"
+      tag: "MailTrap",
+      icon: "images/logo.png"
     };
     var notification = new Notification(title, options);
     notification.addEventListener('click', function(e) {
