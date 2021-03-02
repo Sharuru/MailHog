@@ -8,3 +8,8 @@ This is a customized version of [MailHog](https://github.com/mailhog/MailHog) fo
 * Remove brand
 * Remove Jim
 * Hide release function from WebUI
+
+### Customizing flow
+1. Clone this project.
+2. Do customize work under `customize` folder.
+3. `make build`.
