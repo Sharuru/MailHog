@@ -104,7 +104,7 @@ mailhogApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   });
 
   $scope.getMoment = function(a) {
-    return moment(a)
+    return moment(a).locale('zh-cn');
   }
 
   $scope.backToInbox = function() {
