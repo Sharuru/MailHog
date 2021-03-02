@@ -1,29 +1,29 @@
 #
-# MailHog Dockerfile
+# MailTrap Dockerfile
 #
 
 FROM golang:alpine
 
-# Install MailHog:
+# Build MailTrap:
 RUN apk --no-cache add --virtual build-dependencies \
     git \
-  && mkdir -p /root/gocode \
-  && export GOPATH=/root/gocode \
-  && go get github.com/Sharuru/MailHog \
-  && mv /root/gocode/bin/MailHog /usr/local/bin \
-  && rm -rf /root/gocode \
+    make \
+  && git clone https://github.com/Sharuru/MailHog \
+  && cd MailHog \
+  && make build \
+  && cp MailTrap /usr/local/bin \
   && apk del --purge build-dependencies
 
-# Add mailhog user/group with uid/gid 1000.
+# Add mailtrap user/group with uid/gid 1000.
 # This is a workaround for boot2docker issue #581, see
 # https://github.com/boot2docker/boot2docker/issues/581
-RUN adduser -D -u 1000 mailhog
+RUN adduser -D -u 1000 mailtrap
 
-USER mailhog
+USER mailtrap
 
-WORKDIR /home/mailhog
+WORKDIR /home/mailtrap
 
-ENTRYPOINT ["MailHog"]
+ENTRYPOINT ["MailTrap"]
 
 # Expose the SMTP and HTTP ports:
 EXPOSE 1025 8025
