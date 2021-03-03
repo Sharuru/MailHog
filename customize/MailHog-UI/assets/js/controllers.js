@@ -1,6 +1,6 @@
-var mailhogApp = angular.module('mailhogApp', []);
+var mailtrapApp = angular.module('mailtrapApp', []);
 
-mailhogApp.directive('targetBlank', function(){
+mailtrapApp.directive('targetBlank', function(){
   return {
     link : function(scope, element, attributes){
       element.on('load', function() {
@@ -21,7 +21,7 @@ function guid() {
          s4() + '-' + s4() + s4() + s4();
 }
 
-mailhogApp.directive('ngKeyEnter', function () {
+mailtrapApp.directive('ngKeyEnter', function () {
   return function (scope, element, attrs) {
     element.bind("keydown keypress", function (event) {
       if(event.which === 13) {
@@ -34,7 +34,7 @@ mailhogApp.directive('ngKeyEnter', function () {
   };
 });
 
-mailhogApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
+mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   $scope.host = apiHost;
 
   $scope.cache = {};
@@ -105,6 +105,11 @@ mailhogApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
 
   $scope.getMoment = function(a) {
     return moment(a).locale('zh-cn');
+  }
+
+  $scope.getCSTtime = function(timeStr) {
+    let mnt = moment(timeStr,'ddd, D MMM YYYY hh:mm:ss ZZ');
+    return mnt.locale("zh-cn").format("YYYY年MM月DD日（dddd）A hh:mm:ss ZZ");
   }
 
   $scope.backToInbox = function() {
