@@ -15,11 +15,11 @@ require (
 	github.com/jtolds/gls v4.2.1-0.20161228004933-bb0351aa7eb6+incompatible // indirect
 	github.com/mailhog/MailHog-Server v1.0.1
 	github.com/mailhog/MailHog-UI v1.0.1
-	github.com/mailhog/data v1.0.1 // indirect
+	github.com/mailhog/data v1.0.1
 	github.com/mailhog/http v1.0.1
 	github.com/mailhog/mhsendmail v0.2.1-0.20160920204233-c097b3bc3fe7
 	github.com/mailhog/smtp v1.0.1 // indirect
-	github.com/mailhog/storage v1.0.1 // indirect
+	github.com/mailhog/storage v1.0.1
 	github.com/philhofer/fwd v0.0.0-20160129035939-98c11a7a6ec8 // indirect
 	github.com/smartystreets/assertions v0.0.0-20161213224810-26acb9229f42 // indirect
 	github.com/smartystreets/goconvey v1.6.3-0.20170110120022-3bd662eac601 // indirect

@@ -17,7 +17,7 @@ func DefaultConfig() *Config {
 	return &Config{
 		SMTPBindAddr: "0.0.0.0:1025",
 		APIBindAddr:  "0.0.0.0:8025",
-		Hostname:     "MailTrap.example",
+		Hostname:     "MailTrap.Internal",
 		MongoURI:     "127.0.0.1:27017",
 		MongoDb:      "mailhog",
 		MongoColl:    "messages",
@@ -119,7 +119,7 @@ func Configure() *Config {
 func RegisterFlags() {
 	flag.StringVar(&cfg.SMTPBindAddr, "smtp-bind-addr", envconf.FromEnvP("MH_SMTP_BIND_ADDR", "0.0.0.0:1025").(string), "SMTP bind interface and port, e.g. 0.0.0.0:1025 or just :1025")
 	flag.StringVar(&cfg.APIBindAddr, "api-bind-addr", envconf.FromEnvP("MH_API_BIND_ADDR", "0.0.0.0:8025").(string), "HTTP bind interface and port for API, e.g. 0.0.0.0:8025 or just :8025")
-	flag.StringVar(&cfg.Hostname, "hostname", envconf.FromEnvP("MH_HOSTNAME", "MailTrap.example").(string), "Hostname for EHLO/HELO response, e.g. MailTrap.example")
+	flag.StringVar(&cfg.Hostname, "hostname", envconf.FromEnvP("MH_HOSTNAME", "MailTrap.Internal").(string), "Hostname for EHLO/HELO response, e.g. MailTrap.example")
 	flag.StringVar(&cfg.StorageType, "storage", envconf.FromEnvP("MH_STORAGE", "memory").(string), "Message storage: 'memory' (default), 'mongodb' or 'maildir'")
 	flag.StringVar(&cfg.MongoURI, "mongo-uri", envconf.FromEnvP("MH_MONGO_URI", "127.0.0.1:27017").(string), "MongoDB URI, e.g. 127.0.0.1:27017")
 	flag.StringVar(&cfg.MongoDb, "mongo-db", envconf.FromEnvP("MH_MONGO_DB", "mailhog").(string), "MongoDB database, e.g. mailhog")
