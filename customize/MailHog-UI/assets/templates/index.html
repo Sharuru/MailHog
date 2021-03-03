@@ -47,8 +47,7 @@
             <td>
               <span class="badge rounded-pill bg-warning">发件人</span>&nbsp;
               <span>{{ getSender(message) }}</span><br/>
-              <span class="badge rounded-pill bg-success">收件人</span>&nbsp;
-              <span ng-repeat="to in message.To">{{ to.Mailbox }}@{{ to.Domain }}</span>
+              <span ng-repeat="to in message.To"><span class="badge rounded-pill bg-success">收件人</span>&nbsp;&nbsp;{{ to.Mailbox }}@{{ to.Domain }}<br/></span>
             </td>
             <td>{{ tryDecodeMime(message.Content.Headers["Subject"][0]) }}</td>
             <td>{{ getMoment(date(message.Created)).fromNow() }}</td>
@@ -101,8 +100,7 @@
               <td>
                 <span class="badge rounded-pill bg-warning">发件人</span>&nbsp;
                 <span>{{ getSender(message) }}</span><br/>
-                <span class="badge rounded-pill bg-success">收件人</span>&nbsp;
-                <span ng-repeat="to in message.To">{{ to.Mailbox }}@{{ to.Domain }}</span>
+                <span ng-repeat="to in message.To"><span class="badge rounded-pill bg-success">收件人</span>&nbsp;&nbsp;{{ to.Mailbox }}@{{ to.Domain }}<br/></span>
               </td>
               <td>{{ tryDecodeMime(message.Content.Headers["Subject"][0]) }}</td>
               <td>{{ getMoment(date(message.Created)).fromNow() }}</td>
