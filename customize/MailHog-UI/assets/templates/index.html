@@ -140,7 +140,7 @@
           </tr>
           <tr>
             <th>时间：</th>
-            <td>{{ getCSTtime(tryDecodeMime(preview.Content.Headers["Date"][0])) }}</td>
+            <td>{{ tryDecodeMime(preview.Content.Headers["Date"][0]) }}</td>
           </tr>
           <tr>
             <th>收件人：</th>

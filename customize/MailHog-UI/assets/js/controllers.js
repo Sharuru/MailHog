@@ -107,11 +107,6 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     return moment(a).locale('zh-cn');
   }
 
-  $scope.getCSTtime = function(timeStr) {
-    let mnt = moment(timeStr,'ddd, D MMM YYYY hh:mm:ss ZZ');
-    return mnt.locale("zh-cn").format("YYYY年MM月DD日（dddd）A hh:mm:ss ZZ");
-  }
-
   $scope.backToInbox = function() {
     $scope.preview = null;
     $scope.searching = false;
