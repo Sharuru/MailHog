@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -103,7 +104,8 @@ func (maildir *Maildir) Search(kind, query string, start, limit int) (*data.Mess
 				filteredMessages = append(filteredMessages, *msg)
 			}
 		case "containing":
-			if strings.Contains(strings.ToLower(msg.Raw.Data), query) {
+			decodedContentBody, _ := base64.StdEncoding.DecodeString(msg.Content.Body)
+			if strings.Contains(strings.ToLower(string(decodedContentBody)), query) {
 				if start > matched {
 					matched++
 					break
