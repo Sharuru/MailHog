@@ -4,7 +4,7 @@ ui:
 	go install .
 
 bindata: bindata-deps
-	-rm assets/assets.go
+	rm -f assets/assets.go
 	go-bindata -o assets/assets.go -pkg assets assets/...
 
 bindata-deps:
