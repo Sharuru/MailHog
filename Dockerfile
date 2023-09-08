@@ -2,7 +2,7 @@
 # MailTrap Dockerfile
 #
 
-FROM golang:alpine3
+FROM golang:alpine
 
 # Build MailTrap:
 RUN apk --no-cache add --virtual build-dependencies \
