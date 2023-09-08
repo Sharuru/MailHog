@@ -8,7 +8,7 @@ FROM golang:alpine
 RUN apk --no-cache add --virtual build-dependencies \
     git \
     make \
-    go-bindata
+    go-bindata \
   && git clone https://github.com/Sharuru/MailHog \
   && cd MailHog \
   && make build \
