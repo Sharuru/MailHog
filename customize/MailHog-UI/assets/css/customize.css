@@ -4,5 +4,9 @@
 }
   
 html {
-    font-family: customeizeFont;
+    font-family: "customeizeFont" !important;
+}
+
+body {
+    font-family: "customeizeFont" !important;
 }
