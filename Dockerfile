@@ -2,7 +2,7 @@
 # MailTrap Dockerfile
 #
 
-FROM golang:alpine
+FROM golang:alpine as builder
 
 # Build MailTrap:
 RUN apk --no-cache add --virtual build-dependencies \
@@ -14,6 +14,7 @@ RUN apk --no-cache add --virtual build-dependencies \
   && cp MailTrap /usr/local/bin \
   && apk del --purge build-dependencies
 
+FROM alpine:3
 # Add mailtrap user/group with uid/gid 1000.
 # This is a workaround for boot2docker issue #581, see
 # https://github.com/boot2docker/boot2docker/issues/581
