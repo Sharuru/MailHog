@@ -59,7 +59,7 @@
   </div>
   
   <div ng-if="searching">
-    <span style="position:fixed; right: 1rem;">
+    <span style="float:right; right: 1rem;">
         第 <strong>{{ countSearchMessages > 0 ? startSearchMessages + 1 : 0 }}-{{ (startSearchMessages + countSearchMessages) || 0 }}</strong> 封，
         共
         <strong>{{ totalSearchMessages || 0 }}</strong>
@@ -164,7 +164,7 @@
   
       <div class="tab-content mt-2" style="overflow-y: scroll;" id="nav-tabContent">
         <div class="tab-pane fade" ng-if="hasHTML(preview)" ng-class="{ 'show active' : hasHTML(preview) }" id="nav-html" role="tabpanel" aria-labelledby="nav-home-tab">
-          <iframe target-blank="" srcdoc="{{preview.previewHTML}}" seamless frameborder="0" style="width: 100%"></iframe>
+          <iframe target-blank="" srcdoc="{{preview.previewHTML}}" seamless frameborder="0" style="width: 100%; height: 99%"></iframe>
         </div>
         <div class="tab-pane fade font-monospace" id="nav-plain" style="white-space: pre;" ng-class="{ 'show active' : !hasHTML(preview) }" role="tabpanel">
           <div style="margin: -2rem 0rem;" ng-bind-html="formatMessagePlain(preview)"></div>
