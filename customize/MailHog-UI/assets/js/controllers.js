@@ -355,6 +355,12 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
           h = h.replace(new RegExp(pat, 'g'), data.$cidMap[c])
         }
 	      data.previewHTML = $sce.trustAsHtml(h);
+        // Using monospace font
+        const inputString = data.previewHTML
+        const pattern = /<html>/
+        const modifiedString = inputString.replace(pattern, '<html style=&quot;font-family: monospace; font-size: 1rem;&quot;>')
+        data.previewHTML = modifiedString
+
   		  $scope.preview = data;
   		  preview = $scope.cache[message.ID];
         //reflow();
