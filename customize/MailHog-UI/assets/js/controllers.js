@@ -168,7 +168,6 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.getSender = function(message) {
-    $scope.parseReceiver(message);
     return $scope.tryDecodeMime($scope.getDisplayName(message.Content.Headers["From"][0]) ||
                                 message.From.Mailbox + "@" + message.From.Domain);
   }
@@ -357,6 +356,7 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   		$scope.preview = message;
       var e = $scope.startEvent("Loading message", message.ID, "glyphicon-download-alt");
 	  	$http.get($scope.host + 'api/v1/messages/' + message.ID).success(function(data) {
+        $scope.parseReceiver(data);
 	  	  $scope.cache[message.ID] = data;
 
         // FIXME

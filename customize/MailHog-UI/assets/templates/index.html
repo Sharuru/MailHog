@@ -45,6 +45,7 @@
         <tbody>
           <tr ng-repeat="message in messages" ng-click="selectMessage(message)">
             <td>
+              {{ parseReceiver(message) }}
               <span class="badge rounded-pill bg-warning">发件人</span>&nbsp;
               <span>{{ getSender(message) }}</span><br/>
               <span ng-repeat="to in message.pTo"><span class="badge rounded-pill bg-success">收件人</span>&nbsp;&nbsp;{{ to }}<br/></span>
@@ -147,7 +148,19 @@
           <tr>
             <th>收件人：</th>
             <td>
-              {{ tryDecodeMime((preview.Content.Headers["To"] || []).join(', ') || preview.To[0].Mailbox + "@" + preview.To[0].Domain) }}
+              {{ tryDecodeMime((preview.pTo || []).join(', ')) }}
+            </td>
+          </tr>
+          <tr ng-if="preview.pCc.length > 0">
+            <th>抄送人：</th>
+            <td>
+              {{ tryDecodeMime((preview.pCc || []).join(', ')) }}
+            </td>
+          </tr>
+          <tr ng-if="preview.pBcc.length > 0">
+            <th>密送人：</th>
+            <td>
+              {{ tryDecodeMime((preview.pBcc || []).join(', ')) }}
             </td>
           </tr>
         </tbody>
