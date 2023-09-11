@@ -168,8 +168,35 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.getSender = function(message) {
+    $scope.parseReceiver(message);
     return $scope.tryDecodeMime($scope.getDisplayName(message.Content.Headers["From"][0]) ||
                                 message.From.Mailbox + "@" + message.From.Domain);
+  }
+
+  $scope.parseReceiver = function(message) {
+    var identifiedReceiver = []
+    var wholeReceiver = message.Raw.To;
+    message.pTo = [];
+    message.pCc = [];
+    message.pBcc = [];
+    if (message.Content.Headers["To"] && message.Content.Headers["To"][0]) {
+      const splittedTo = message.Content.Headers["To"][0].split(',');
+      splittedTo.forEach((value) => {
+        const trimmedValue = value.trim();
+        message.pTo.push(trimmedValue);
+        identifiedReceiver.push(trimmedValue)
+      });
+
+    }
+    if (message.Content.Headers["Cc"] && message.Content.Headers["Cc"][0]) {
+      const splittedCc = message.Content.Headers["Cc"][0].split(',');
+      splittedCc.forEach((value) => {
+        const trimmedValue = value.trim();
+        message.pCc.push(trimmedValue);
+        identifiedReceiver.push(trimmedValue)
+      });
+    }
+    message.pBcc = [...new Set(wholeReceiver.filter(receiver => !identifiedReceiver.includes(receiver)))];
   }
 
   $scope.getDisplayName = function(value) {
@@ -259,6 +286,9 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     }
     $http.get(url).success(function(data) {
       $scope.messages = data.items;
+      // CC, BCC advisor
+
+
       $scope.totalMessages = data.total;
       $scope.countMessages = data.count;
       $scope.startMessages = data.start;
