@@ -145,7 +145,7 @@
             <th>时间：</th>
             <td>{{ tryDecodeMime(preview.Content.Headers["Date"][0]) }}</td>
           </tr>
-          <tr>
+          <tr ng-if="preview.pTo.length > 0">
             <th>收件人：</th>
             <td>
               {{ tryDecodeMime((preview.pTo || []).join(', ')) }}
