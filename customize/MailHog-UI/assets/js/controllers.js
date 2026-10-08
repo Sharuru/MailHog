@@ -13,7 +13,7 @@ function fitMailFrame(frame) {
   if (!doc.getElementById('mailtrap-frame-fit')) {
     var style = doc.createElement('style');
     style.id = 'mailtrap-frame-fit';
-    style.textContent = 'html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}';
+    style.textContent = 'html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;}body>*:first-child{margin-top:0!important;}';
     (doc.head || doc.documentElement).appendChild(style);
   }
   if (!doc.documentElement.getAttribute('data-mailtrap-wheel')) {
@@ -112,6 +112,7 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   $scope.totalSearchMessages = 0
 
   $scope.jim = null
+  $scope.previewTab = 'plain';
 
   $scope.smtpmech = "NONE"
   $scope.selectedOutgoingSMTP = ""
@@ -532,15 +533,31 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     return $(".messages :checked").length > 0 ? true : false;
   }
 
+  $scope.showPreviewTab = function(tab) {
+    $scope.previewTab = tab;
+    if (tab === 'html') {
+      $timeout(function() {
+        $scope.resizePreview();
+      }, 0);
+    }
+  }
+
+  $scope.resetPreviewTab = function(message) {
+    $scope.previewTab = $scope.hasHTML(message) ? 'html' : 'plain';
+  }
+
   $scope.selectMessage = function(message) {
     $timeout(function(){
       $scope.resizePreview();
     }, 0);
   	if($scope.cache[message.ID]) {
   		$scope.preview = $scope.cache[message.ID];
+      $scope.resetPreviewTab($scope.preview);
       //reflow();
   	} else {
   		$scope.preview = message;
+      $scope.resetPreviewTab(message);
+      var autoTab = $scope.previewTab;
       if (!message.attachmentParts) {
         message.attachmentParts = $scope.collectAttachments(message);
       }
@@ -577,6 +594,9 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
         }
 	      data.previewHTML = $sce.trustAsHtml(h);
   		  $scope.preview = data;
+        if ($scope.previewTab == autoTab) {
+          $scope.resetPreviewTab(data);
+        }
   		  preview = $scope.cache[message.ID];
         //reflow();
         e.done();

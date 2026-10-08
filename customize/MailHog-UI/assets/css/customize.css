@@ -432,17 +432,17 @@ body {
     overflow: hidden;
 }
 
+.mailtrap-panes,
+.mailtrap-pane {
+    min-width: 0;
+    max-width: 100%;
+}
+
 .mailtrap-plain {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     word-break: break-word;
     margin: 0;
-}
-
-.tab-content,
-.tab-pane {
-    min-width: 0;
-    max-width: 100%;
 }
 
 .mailtrap-source {

@@ -81,9 +81,9 @@
       </div>
 
       <div class="mailtrap-tabs nav" role="tablist">
-        <button class="nav-link" ng-if="hasHTML(preview)" ng-class="{ active: hasHTML(preview) }" data-bs-toggle="tab" data-bs-target="#nav-html" type="button">以 HTML 显示</button>
-        <button class="nav-link" ng-class="{ active: !hasHTML(preview) }" data-bs-toggle="tab" data-bs-target="#nav-plain" type="button">以纯文本显示</button>
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#nav-source" type="button">显示邮件源代码</button>
+        <button class="nav-link" ng-if="hasHTML(preview)" ng-class="{ active: previewTab == 'html' }" ng-click="showPreviewTab('html')" type="button">以 HTML 显示</button>
+        <button class="nav-link" ng-class="{ active: previewTab == 'plain' }" ng-click="showPreviewTab('plain')" type="button">以纯文本显示</button>
+        <button class="nav-link" ng-class="{ active: previewTab == 'source' }" ng-click="showPreviewTab('source')" type="button">显示邮件源代码</button>
       </div>
 
       <div class="mailtrap-file" ng-repeat="item in preview.attachmentParts">
@@ -92,14 +92,14 @@
         <a href="{{ host }}api/v1/messages/{{ preview.ID }}/mime/part/{{ item.index }}/download">下载</a>
       </div>
 
-      <div class="tab-content">
-        <div class="tab-pane fade" ng-if="hasHTML(preview)" ng-class="{ 'show active' : hasHTML(preview) }" id="nav-html" role="tabpanel">
+      <div class="mailtrap-panes">
+        <div class="mailtrap-pane" ng-if="hasHTML(preview)" ng-show="previewTab == 'html'" id="nav-html">
           <iframe class="mailtrap-html-frame" target-blank="" srcdoc="{{preview.previewHTML}}" scrolling="no" frameborder="0"></iframe>
         </div>
-        <div class="tab-pane fade mailtrap-plain" id="nav-plain" ng-class="{ 'show active' : !hasHTML(preview) }" role="tabpanel">
-          <div ng-bind-html="formatMessagePlain(preview)"></div>
+        <div class="mailtrap-pane" ng-show="previewTab == 'plain'" id="nav-plain">
+          <div class="mailtrap-plain" ng-bind-html="formatMessagePlain(preview)"></div>
         </div>
-        <div class="tab-pane fade" id="nav-source" role="tabpanel">
+        <div class="mailtrap-pane" ng-show="previewTab == 'source'" id="nav-source">
           <pre class="mailtrap-source">{{ getSource(preview) }}</pre>
         </div>
       </div>
