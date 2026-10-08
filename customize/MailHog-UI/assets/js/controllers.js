@@ -19,7 +19,7 @@ function fitMailFrame(frame) {
   if (!doc.documentElement.getAttribute('data-mailtrap-wheel')) {
     doc.documentElement.setAttribute('data-mailtrap-wheel', '1');
     doc.addEventListener('wheel', function(event) {
-      var stage = frame.closest('.mailtrap-detail-body') || frame.closest('.mailtrap-stage');
+      var stage = frame.closest('.mailtrap-panes') || frame.closest('.mailtrap-detail-body') || frame.closest('.mailtrap-stage');
       if (!stage) {
         return;
       }
@@ -533,8 +533,18 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     return $(".messages :checked").length > 0 ? true : false;
   }
 
+  $scope.resetPaneScroll = function() {
+    $timeout(function() {
+      var panes = document.querySelector('.mailtrap-panes');
+      if (panes) {
+        panes.scrollTop = 0;
+      }
+    }, 0);
+  }
+
   $scope.showPreviewTab = function(tab) {
     $scope.previewTab = tab;
+    $scope.resetPaneScroll();
     if (tab === 'html') {
       $timeout(function() {
         $scope.resizePreview();
@@ -547,6 +557,7 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.selectMessage = function(message) {
+    $scope.resetPaneScroll();
     $timeout(function(){
       $scope.resizePreview();
     }, 0);

@@ -64,6 +64,7 @@
       </span>
     </div>
     <div class="mailtrap-detail-body">
+      <div class="mailtrap-detail-head">
       <h1>{{ tryDecodeMime(preview.Content.Headers["Subject"][0]) }}</h1>
       <div class="mailtrap-fields">
         <div class="lab">发件人</div>
@@ -90,6 +91,7 @@
         <span class="mailtrap-pdf">{{ item.type.indexOf("pdf") >= 0 ? "PDF" : "FILE" }}</span>
         <span>{{ item.name }}<small>{{ item.type }}<span ng-if="item.size"> · {{ item.size }} bytes</span></small></span>
         <a href="{{ host }}api/v1/messages/{{ preview.ID }}/mime/part/{{ item.index }}/download">下载</a>
+      </div>
       </div>
 
       <div class="mailtrap-panes">
