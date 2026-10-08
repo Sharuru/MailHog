@@ -14,17 +14,15 @@
 
   </head>
   <body ng-controller="MailCtrl" ng-click="keepopen=false">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container-fluid">
-        <div class="col-2">
-          <a class="navbar-brand" href="#"><img src="images/logo.png" height="50" alt="MailTrap" class="d-inline-block">
-            &nbsp;&nbsp;<span class="align-middle fw-bolder fs-4">MailTrap</span>
-          </a>
-        </div>
-        <div class="col-10">
-          <form class="d-flex" role="search">
-            <div class=" form-floating col-6">
-              <input ng-model="searchText" type="text" placeholder="搜索邮件" id="search-mail-input" ng-key-enter="search('containing', searchText)" class="form-control" autocomplete="off" id="search" ng-focus="keepopen=true" ng-click="$event.stopPropagation()">
+    <nav class="navbar navbar-light bg-light mailtrap-nav">
+      <div class="mailtrap-nav-inner">
+        <a class="navbar-brand mailtrap-brand" href="#">
+          <img src="images/logo.png" alt="MailTrap">
+          <span>MailTrap</span>
+        </a>
+        <form class="mailtrap-search" role="search">
+          <div class="form-floating mailtrap-search-field">
+              <input ng-model="searchText" type="text" placeholder="搜索邮件" id="search-mail-input" ng-key-enter="search('containing', searchText)" class="form-control" autocomplete="off" ng-focus="keepopen=true" ng-click="$event.stopPropagation()">
               <label for="search-mail-input"><i class="bi bi-search"></i>&nbsp;搜索邮件</label>
               <div class="list-group" ng-if="searchText.length > 0 && keepopen" style="position:absolute; z-index: 100; margin-top: 0.4rem;">
                 <a href="#" ng-click="search('containing', searchText)" class="list-group-item">
@@ -38,8 +36,7 @@
                 </a>
               </div>
             </div>
-          </form>
-        </div>
+        </form>
       </div>
     </nav>
 
