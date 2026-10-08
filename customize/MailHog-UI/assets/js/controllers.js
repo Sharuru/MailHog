@@ -256,6 +256,11 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   $(window).on('resize.mailtrapPreview', function() {
     $scope.resizePreview();
     if($scope.mailFull) {
+      var lifted = document.querySelector('.mailtrap-detail.is-lifted');
+      if(lifted && !lifted.classList.contains('is-animating')) {
+        lifted.style.width = window.innerWidth + 'px';
+        lifted.style.height = window.innerHeight + 'px';
+      }
       return;
     }
     var next = clampListWidth($scope.listWidth);
@@ -278,11 +283,94 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     }
   });
 
+  function placeDetail(detail, box) {
+    detail.style.position = 'fixed';
+    detail.style.margin = '0';
+    detail.style.top = box.top + 'px';
+    detail.style.left = box.left + 'px';
+    detail.style.width = box.width + 'px';
+    detail.style.height = box.height + 'px';
+  }
+
+  function clearDetail(detail) {
+    detail.style.position = '';
+    detail.style.margin = '';
+    detail.style.top = '';
+    detail.style.left = '';
+    detail.style.width = '';
+    detail.style.height = '';
+    detail.style.transition = '';
+    detail.classList.remove('is-lifted');
+    detail.classList.remove('is-animating');
+  }
+
   $scope.toggleMailFull = function() {
-    $scope.mailFull = !$scope.mailFull;
-    $timeout(function() {
+    var detail = document.querySelector('.mailtrap-detail');
+    if(!detail || detail.classList.contains('is-animating')) {
+      return;
+    }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var motion = 'top .28s ease, left .28s ease, width .28s ease, height .28s ease';
+    detail.classList.add('is-lifted');
+    detail.classList.add('is-animating');
+
+    if(!$scope.mailFull) {
+      placeDetail(detail, detail.getBoundingClientRect());
+      detail.style.transition = 'none';
+      detail.offsetWidth;
+      detail.style.transition = reduce ? 'none' : motion;
+      placeDetail(detail, {top: 0, left: 0, width: window.innerWidth, height: window.innerHeight});
+      $scope.mailFull = true;
+    } else {
+      var split = document.querySelector('.mailtrap-split');
+      var list = document.querySelector('.mailtrap-list');
+      var handle = document.querySelector('.mailtrap-split-handle');
+      var splitRect = split.getBoundingClientRect();
+      var handleW = handle ? handle.getBoundingClientRect().width : 0;
+      var targetLeft = list.getBoundingClientRect().right + handleW;
+      var current = detail.getBoundingClientRect();
+      detail.style.transition = 'none';
+      placeDetail(detail, current);
+      detail.offsetWidth;
+      detail.style.transition = reduce ? 'none' : motion;
+      placeDetail(detail, {
+        top: splitRect.top,
+        left: targetLeft,
+        width: Math.max(0, splitRect.right - targetLeft),
+        height: splitRect.height
+      });
+      $scope.mailFull = false;
+    }
+
+    var settled = false;
+    var timer = 0;
+    var finish = function() {
+      if(settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(timer);
+      detail.removeEventListener('transitionend', done);
+      detail.classList.remove('is-animating');
+      if(!$scope.mailFull) {
+        clearDetail(detail);
+      } else {
+        detail.style.transition = '';
+      }
       $scope.resizePreview();
-    }, 0);
+    };
+    function done(event) {
+      if(event.target !== detail || event.propertyName !== 'width') {
+        return;
+      }
+      finish();
+    }
+    if(reduce) {
+      finish();
+      return;
+    }
+    timer = window.setTimeout(finish, 360);
+    detail.addEventListener('transitionend', done);
   }
 
   $scope.startSplitDrag = function(event) {

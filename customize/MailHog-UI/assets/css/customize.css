@@ -194,15 +194,9 @@ body {
     background: #2563eb;
 }
 
-.mailtrap-split.is-full {
-    position: fixed;
-    inset: 0;
+.mailtrap-detail.is-lifted {
     z-index: 30;
-    background: #fff;
-}
-
-.mailtrap-split.is-full .mailtrap-list {
-    display: none;
+    box-shadow: 0 12px 32px rgba(22, 50, 79, 0.18);
 }
 
 body.mailtrap-split-dragging {

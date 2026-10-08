@@ -11,7 +11,7 @@
   </div>
 </script>
 
-<div class="mailtrap-split" ng-class="{'is-full': mailFull, 'is-dragging': splitDrag}">
+<div class="mailtrap-split" ng-class="{'is-dragging': splitDrag}">
   <section class="mailtrap-list" ng-style="{'width': listWidth + 'px'}">
     <div class="mailtrap-list-bar" ng-if="!searching">
       <button class="mailtrap-icon-btn" ng-click="refresh()" title="刷新">
@@ -55,7 +55,7 @@
     </div>
   </section>
 
-  <div class="mailtrap-split-handle" ng-if="!mailFull" ng-mousedown="startSplitDrag($event)" role="separator" aria-orientation="vertical" title="拖动调整宽度"></div>
+  <div class="mailtrap-split-handle" ng-mousedown="startSplitDrag($event)" role="separator" aria-orientation="vertical" title="拖动调整宽度"></div>
 
   <section class="mailtrap-detail" ng-if="preview">
     <div class="mailtrap-detail-bar">
