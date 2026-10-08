@@ -4,10 +4,8 @@
       <div class="mailtrap-row-subject">{{ tryDecodeMime(message.Content.Headers["Subject"][0]) }}</div>
       <div class="mailtrap-row-line"><span class="k f">发件人</span>{{ tryDecodeMime((message.Content.Headers["From"] && message.Content.Headers["From"][0]) || (message.From.Mailbox + "@" + message.From.Domain)) }}</div>
       <div class="mailtrap-row-line" ng-repeat="to in message.pTo"><span class="k t">收件人</span>{{ to }}</div>
-      <div class="mailtrap-row-line" ng-if="message.pCc.length || message.pBcc.length">
-        <span ng-repeat="cc in message.pCc"><span class="k c">抄送人</span>{{ cc }} </span>
-        <span ng-repeat="bcc in message.pBcc"><span class="k b">密送人</span>{{ bcc }} </span>
-      </div>
+      <div class="mailtrap-row-line" ng-repeat="cc in message.pCc"><span class="k c">抄送人</span>{{ cc }}</div>
+      <div class="mailtrap-row-line" ng-repeat="bcc in message.pBcc"><span class="k b">密送人</span>{{ bcc }}</div>
     </div>
     <div class="mailtrap-row-meta">{{ getMoment(date(message.Created)).fromNow() }}<br>{{ fileSize(message.Raw.Data.length) }}</div>
   </div>
@@ -86,7 +84,6 @@
         <button class="nav-link" ng-if="hasHTML(preview)" ng-class="{ active: hasHTML(preview) }" data-bs-toggle="tab" data-bs-target="#nav-html" type="button">以 HTML 显示</button>
         <button class="nav-link" ng-class="{ active: !hasHTML(preview) }" data-bs-toggle="tab" data-bs-target="#nav-plain" type="button">以纯文本显示</button>
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#nav-source" type="button">显示邮件源代码</button>
-        <button class="nav-link" ng-if="preview.attachmentParts && preview.attachmentParts.length" data-bs-toggle="tab" data-bs-target="#nav-mime" type="button">下载 MIME</button>
       </div>
 
       <div class="mailtrap-file" ng-repeat="item in preview.attachmentParts">
@@ -102,15 +99,8 @@
         <div class="tab-pane fade mailtrap-plain" id="nav-plain" ng-class="{ 'show active' : !hasHTML(preview) }" role="tabpanel">
           <div ng-bind-html="formatMessagePlain(preview)"></div>
         </div>
-        <div class="tab-pane fade mailtrap-plain" id="nav-source" role="tabpanel">
-          <div>{{ getSource(preview) }}</div>
-        </div>
-        <div class="tab-pane fade" id="nav-mime" role="tabpanel">
-          <div ng-repeat="item in preview.attachmentParts" class="mailtrap-attachment">
-            <a href="{{ host }}api/v1/messages/{{ preview.ID }}/mime/part/{{ item.index }}/download" class="mailtrap-ghost">下载</a>
-            <span>{{ item.name }}</span>
-            <span class="mailtrap-muted">{{ item.type }}<span ng-if="item.size"> ({{ item.size }} bytes)</span></span>
-          </div>
+        <div class="tab-pane fade" id="nav-source" role="tabpanel">
+          <pre class="mailtrap-source">{{ getSource(preview) }}</pre>
         </div>
       </div>
     </div>

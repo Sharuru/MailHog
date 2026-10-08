@@ -733,6 +733,17 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   	$('#confirm-delete-all').modal('show');
   }
 
+  window.mailtrapClearAll = function() {
+    var root = document.querySelector('[ng-controller="MailCtrl"]') || document.body;
+    var scope = angular.element(root).scope();
+    if (!scope) {
+      return;
+    }
+    scope.$apply(function() {
+      scope.deleteAll();
+    });
+  }
+
   $scope.releaseOne = function(message) {
     $scope.releasing = message;
 
