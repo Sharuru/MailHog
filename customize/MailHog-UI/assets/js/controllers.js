@@ -19,7 +19,7 @@ function fitMailFrame(frame) {
   if (!doc.documentElement.getAttribute('data-mailtrap-wheel')) {
     doc.documentElement.setAttribute('data-mailtrap-wheel', '1');
     doc.addEventListener('wheel', function(event) {
-      var stage = frame.closest('.mailtrap-stage');
+      var stage = frame.closest('.mailtrap-detail-body') || frame.closest('.mailtrap-stage');
       if (!stage) {
         return;
       }
@@ -132,6 +132,21 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     $scope.preview = null;
     $scope.searching = false;
   }
+  $scope.listPosition = function() {
+    var list = $scope.searching ? $scope.searchMessages : $scope.messages;
+    var total = $scope.searching ? $scope.totalSearchMessages : $scope.totalMessages;
+    var start = $scope.searching ? $scope.startSearchMessages : $scope.startMessages;
+    if (!$scope.preview || !list || !list.length) {
+      return "";
+    }
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].ID == $scope.preview.ID) {
+        return (start + i + 1) + " / " + (total || list.length);
+      }
+    }
+    return "";
+  }
+
   $scope.backToInboxFirst = function() {
     $scope.preview = null;
     $scope.startIndex = 0;
