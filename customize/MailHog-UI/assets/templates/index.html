@@ -73,7 +73,7 @@
         <div class="lab">发件人</div>
         <div>{{ tryDecodeMime(preview.Content.Headers["From"][0] || preview.From.Mailbox + "@" + preview.From.Domain) }}</div>
         <div class="lab">时间</div>
-        <div>{{ (preview.Content.Headers["Date"] && preview.Content.Headers["Date"][0]) ? tryDecodeMime(preview.Content.Headers["Date"][0]) : getMoment(date(preview.Created)).format("YYYY-MM-DD HH:mm") }}</div>
+        <div>{{ (preview.Content.Headers["Date"] && preview.Content.Headers["Date"][0]) ? tryDecodeMime(preview.Content.Headers["Date"][0]) : getMoment(date(preview.Created)).format("YYYY-MM-DD HH:mm:ss") }}</div>
         <div class="lab" ng-if="preview.pTo.length">收件人</div>
         <div ng-if="preview.pTo.length">{{ (preview.pTo || []).join("，") }}</div>
         <div class="lab">大小</div>
