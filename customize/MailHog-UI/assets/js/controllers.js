@@ -148,10 +148,43 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     if(typeof(Notification) !== "undefined") {
       Notification.requestPermission();
     }
+    // Bootstrap sets aria-hidden after the fade. Focus must already be outside.
+    var clearModal = document.getElementById('confirm-delete-all');
+    if(clearModal) {
+      $(clearModal).on('show.bs.modal', function() {
+        $scope.releaseClearModalFocus();
+        clearModal.removeAttribute('aria-hidden');
+      });
+      $(clearModal).on('shown.bs.modal', function() {
+        clearModal.removeAttribute('aria-hidden');
+        if(clearModal.contains(document.activeElement) && document.activeElement !== clearModal) {
+          clearModal.focus();
+        }
+      });
+      $(clearModal).on('hide.bs.modal', function() {
+        $scope.releaseClearModalFocus();
+      });
+    }
   });
 
-  $scope.getMoment = function(a) {
-    return moment(a).locale('zh-cn');
+  // Date#toString() appends a parenthetical timezone name. Moment warns on that
+  // string, including non-English names, so pass it a Date instead.
+  $scope.getMoment = function(value) {
+    var instant = value instanceof Date ? value : new Date(value);
+    return moment(instant).locale('zh-cn');
+  }
+
+  $scope.releaseClearModalFocus = function() {
+    var modal = document.getElementById('confirm-delete-all');
+    var active = document.activeElement;
+    if(!modal || !active || !modal.contains(active)) {
+      return;
+    }
+    active.blur();
+    var next = document.querySelector('.mailtrap-brand');
+    if(next) {
+      next.focus();
+    }
   }
 
   $scope.backToInbox = function() {
@@ -932,7 +965,7 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     }
   };
   $scope.date = function(timestamp) {
-  	return (new Date(timestamp)).toString();
+  	return new Date(timestamp);
   };
 
   $scope.deleteAll = function() {
