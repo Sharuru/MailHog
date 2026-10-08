@@ -1,11 +1,55 @@
 var mailtrapApp = angular.module('mailtrapApp', []);
 
+function fitMailFrame(frame) {
+  var doc;
+  try {
+    doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+  } catch (e) {
+    return;
+  }
+  if (!doc || !doc.documentElement) {
+    return;
+  }
+  if (!doc.getElementById('mailtrap-frame-fit')) {
+    var style = doc.createElement('style');
+    style.id = 'mailtrap-frame-fit';
+    style.textContent = 'html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}';
+    (doc.head || doc.documentElement).appendChild(style);
+  }
+  if (!doc.documentElement.getAttribute('data-mailtrap-wheel')) {
+    doc.documentElement.setAttribute('data-mailtrap-wheel', '1');
+    doc.addEventListener('wheel', function(event) {
+      var stage = frame.closest('.mailtrap-stage');
+      if (!stage) {
+        return;
+      }
+      stage.scrollTop += event.deltaY;
+      stage.scrollLeft += event.deltaX;
+      event.preventDefault();
+    }, {passive: false});
+  }
+  frame.style.height = '0px';
+  var body = doc.body;
+  var height = doc.documentElement.scrollHeight || 0;
+  if (body) {
+    height = Math.max(height, body.scrollHeight || 0, body.offsetHeight || 0);
+  }
+  frame.style.height = Math.max(height, 1) + 'px';
+}
+
 mailtrapApp.directive('targetBlank', function(){
   return {
     link : function(scope, element, attributes){
       element.on('load', function() {
+        var frame = element[0];
         var a = element.contents().find('a');
         a.attr('target', '_blank');
+        var refit = function() {
+          fitMailFrame(frame);
+        };
+        refit();
+        element.contents().find('img').on('load error', refit);
+        window.setTimeout(refit, 50);
       });
     }
   };
@@ -163,9 +207,14 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.resizePreview = function() {
-    $('.tab-content').height($(window).innerHeight() - $('.tab-content').offset().top);
-    $('.tab-content .tab-pane').height($(window).innerHeight() - $('.tab-content').offset().top);
+    $('iframe.mailtrap-html-frame').each(function() {
+      fitMailFrame(this);
+    });
   }
+
+  $(window).on('resize.mailtrapPreview', function() {
+    $scope.resizePreview();
+  });
 
   $scope.getSender = function(message) {
     return $scope.tryDecodeMime($scope.getDisplayName(message.Content.Headers["From"][0]) ||

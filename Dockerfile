@@ -2,15 +2,16 @@
 # MailTrap Dockerfile
 #
 
-FROM golang:alpine
+FROM golang:1.27.1-alpine
 
-# Build MailTrap:
+# Build MailTrap from this image's build context so local fixes are included.
 RUN apk --no-cache add --virtual build-dependencies \
     git \
-    make \
-    go-bindata \
-  && git clone https://github.com/Sharuru/MailHog \
-  && cd MailHog \
+    make
+
+WORKDIR /src
+COPY . .
+RUN go install github.com/go-bindata/go-bindata/go-bindata@v3.1.2 \
   && make build \
   && cp MailTrap /usr/local/bin \
   && apk del --purge build-dependencies

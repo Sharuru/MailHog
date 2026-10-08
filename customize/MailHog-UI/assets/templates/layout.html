@@ -43,32 +43,31 @@
       </div>
     </nav>
 
-    <div class="container-fluid">
-      <div class="row mt-2">
-        <div class="col-2">
-          <div class="btn-group-vertical" role="group" style="width: 100%;">
-            <button type="button" class="btn {{ hasEventSource ? 'btn-primary' : 'btn-outline-primary' }}" ng-click="toggleStream()" >
-              <i class="bi {{ hasEventSource ? 'bi-check-circle-fill' : 'bi-pause-circle-fill' }}"></i>
-              {{ hasEventSource ? '实时刷新已开启' : '实时刷新已关闭' }}
-            </button>
-            <button type="button" class="btn btn-outline-primary" ng-click="backToInboxFirst()">
-              <i class="bi bi-save-fill"></i>
-              查看收件箱 <span class="badge bg-danger">{{totalMessages}}</span>
-            </button>
-            <button type="button" class="btn btn-outline-primary" ng-click="deleteAll()">
-              <i class="bi bi-eraser-fill"></i>
-              清空所有邮件
-            </button>
-          </div>
-    
-          <div style="bottom: 2rem; position: fixed; opacity: 0.2; ">
-            <img src="{{ hasEventSource ? '/images/dld-run.gif' : '/images/dld-idle.gif' }}">
-            <div style=" text-align: center; font-size: small;">MailTrap v1.1.9</div>
-          </div>
+    <div class="mailtrap-shell">
+      <div class="mailtrap-sidebar">
+        <div class="btn-group-vertical" role="group">
+          <button type="button" class="btn {{ hasEventSource ? 'btn-primary' : 'btn-outline-primary' }}" ng-click="toggleStream()" >
+            <i class="bi {{ hasEventSource ? 'bi-check-circle-fill' : 'bi-pause-circle-fill' }}"></i>
+            {{ hasEventSource ? '实时刷新已开启' : '实时刷新已关闭' }}
+          </button>
+          <button type="button" class="btn btn-outline-primary" ng-click="backToInboxFirst()">
+            <i class="bi bi-save-fill"></i>
+            查看收件箱 <span class="badge bg-danger">{{totalMessages}}</span>
+          </button>
+          <button type="button" class="btn btn-outline-primary" ng-click="deleteAll()">
+            <i class="bi bi-eraser-fill"></i>
+            清空所有邮件
+          </button>
         </div>
-        <div class="col-10">
-          [: .Content :]
+
+        <div class="mailtrap-sidebar-mark">
+          <img src="{{ hasEventSource ? '/images/dld-run.gif' : '/images/dld-idle.gif' }}">
+          <div>MailTrap v1.1.9</div>
         </div>
+      </div>
+      <div class="mailtrap-stage">
+        [: .Content :]
+      </div>
     </div>
 
 
