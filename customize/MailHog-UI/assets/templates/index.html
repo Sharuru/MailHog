@@ -61,62 +61,60 @@
     </div>
   </div>
   
-  <div ng-if="searching">
-    <span style="float:right; right: 1rem;">
-        第 <strong>{{ countSearchMessages > 0 ? startSearchMessages + 1 : 0 }}-{{ (startSearchMessages + countSearchMessages) || 0 }}</strong> 封，
-        共
-        <strong>{{ totalSearchMessages || 0 }}</strong>
-        封邮件
-  
-      <button class="btn btn-outline-primary" ng-click="showNewer()" title="较新的邮件" ng-class="{'disabled':startSearchMessages<=0}">
-        <i class="bi bi-caret-left-fill"></i>
-      </button>
-  
-      <button class="btn btn-outline-primary" ng-click="showOlder()" title="较老的邮件" ng-class="{'disabled':startSearchMessages+countSearchMessages>=totalSearchMessages}">
-        <i class="bi bi-caret-right-fill"></i>
-      </button>
-    </span>
-  
+  <div ng-if="searching && !preview" class="mailtrap-toolbar">
     <button class="btn btn-outline-primary" ng-click="backToInbox()" title="返回收件箱">
       <i class="bi bi-arrow-left"></i>
     </button>
     <button class="btn btn-outline-primary" ng-click="refresh()" title="刷新">
       <i class="bi bi-arrow-clockwise"></i>
     </button>
-  
-    <span>关键词：<strong>{{ searchedText }}</strong> 的搜索结果 </span>
+    <span class="mailtrap-toolbar-title">关键词：<strong>{{ searchedText }}</strong> 的搜索结果</span>
+    <span class="mailtrap-toolbar-side">
+      第 <strong>{{ countSearchMessages > 0 ? startSearchMessages + 1 : 0 }}-{{ (startSearchMessages + countSearchMessages) || 0 }}</strong> 封，
+      共
+      <strong>{{ totalSearchMessages || 0 }}</strong>
+      封邮件
+      <button class="btn btn-outline-primary" ng-click="showNewer()" title="较新的邮件" ng-class="{'disabled':startSearchMessages<=0}">
+        <i class="bi bi-caret-left-fill"></i>
+      </button>
+      <button class="btn btn-outline-primary" ng-click="showOlder()" title="较老的邮件" ng-class="{'disabled':startSearchMessages+countSearchMessages>=totalSearchMessages}">
+        <i class="bi bi-caret-right-fill"></i>
+      </button>
+    </span>
   </div>
-  
-    <div ng-if="searching">
-      <div class="mt-2">
-        <table class="table table-hover table-bordered">
-          <thead>
-            <tr>
-              <th scope="col" style="width:30%;">收发对象</th>
-              <th scope="col" style="width:50%;">主题</th>
-              <th scope="col" style="width:10%;">时间</th>
-              <th scope="col" style="width:10%;">大小</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr ng-repeat="message in searchMessages" ng-click="selectMessage(message)">
-              <td>
-                <span class="badge rounded-pill bg-warning">发件人</span>&nbsp;
-                <span>{{ getSender(message) }}</span><br/>
-                <span ng-repeat="to in message.To"><span class="badge rounded-pill bg-success">收件人</span>&nbsp;&nbsp;{{ to.Mailbox }}@{{ to.Domain }}<br/></span>
-              </td>
-              <td>{{ tryDecodeMime(message.Content.Headers["Subject"][0]) }}</td>
-              <td>{{ getMoment(date(message.Created)).fromNow() }}</td>
-              <td class="text-uppercase">{{ fileSize(message.Raw.Data.length) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+
+  <div ng-if="searching && !preview" class="mt-2">
+    <p ng-if="!searchMessages.length" class="text-muted">没有找到邮件</p>
+    <table ng-if="searchMessages.length" class="table table-hover table-bordered mailtrap-list-table">
+      <thead>
+        <tr>
+          <th scope="col">收发对象</th>
+          <th scope="col">主题</th>
+          <th scope="col" class="mailtrap-col-when">时间</th>
+          <th scope="col" class="mailtrap-col-size">大小</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="message in searchMessages" ng-click="selectMessage(message)">
+          <td>
+            {{ parseReceiver(message) }}
+            <span class="badge rounded-pill bg-warning">发件人</span>&nbsp;
+            <span>{{ getSender(message) }}</span><br/>
+            <span ng-repeat="to in message.pTo"><span class="badge rounded-pill bg-success">收件人</span>&nbsp;&nbsp;{{ to }}<br/></span>
+            <span ng-repeat="cc in message.pCc"><span class="badge rounded-pill bg-primary">抄送人</span>&nbsp;&nbsp;{{ cc }}<br/></span>
+            <span ng-repeat="bcc in message.pBcc"><span class="badge rounded-pill bg-info">密送人</span>&nbsp;&nbsp;{{ bcc }}<br/></span>
+          </td>
+          <td>{{ tryDecodeMime(message.Content.Headers["Subject"][0]) }}</td>
+          <td class="mailtrap-col-when">{{ getMoment(date(message.Created)).fromNow() }}</td>
+          <td class="mailtrap-col-size text-uppercase">{{ fileSize(message.Raw.Data.length) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
   </div>
   
   <div ng-if="preview">
-    <button class="btn btn-outline-primary" ng-click="backToInbox()" title="返回收件箱">
+    <button class="btn btn-outline-primary" ng-click="closePreview()" title="返回">
       <i class="bi bi-arrow-left"></i>
     </button>
   
@@ -173,7 +171,7 @@
           <button class="nav-link" ng-if="hasHTML(preview)" ng-class="{ active: hasHTML(preview) }" id="nav-html-tab" data-bs-toggle="tab" data-bs-target="#nav-html" type="button" role="tab" >以 HTML 显示</button>
           <button class="nav-link" ng-class="{ active: !hasHTML(preview) }" id="nav-plain-tab" data-bs-toggle="tab" data-bs-target="#nav-plain" type="button" role="tab" >以纯文本显示</button>
           <button class="nav-link" id="nav-source-tab" data-bs-toggle="tab" data-bs-target="#nav-source" type="button" role="tab" >显示邮件源代码</button>
-          <button class="nav-link" ng-if="preview.MIME" id="nav-mime-tab" data-bs-toggle="tab" data-bs-target="#nav-mime" type="button" role="tab" >下载 MIME</button>
+          <button class="nav-link" ng-if="preview.attachmentParts && preview.attachmentParts.length" id="nav-mime-tab" data-bs-toggle="tab" data-bs-target="#nav-mime" type="button" role="tab" >下载 MIME</button>
         </div>
       </nav>
   
@@ -187,15 +185,14 @@
         <div class="tab-pane fade font-monospace mailtrap-plain" id="nav-source" role="tabpanel">
           <div>{{ getSource(preview) }}</div>
         </div>
-        <div class="tab-pane fade"  id="nav-mime" role="tabpanel">
-          <div ng-repeat="part in preview.MIME.Parts" class="mime-part">
-            <a href="{{ host }}api/v1/messages/{{ preview.ID }}/mime/part/{{ $index }}/download" type="button" class="btn btn-outline-primary">
+        <div class="tab-pane fade" id="nav-mime" role="tabpanel">
+          <div ng-repeat="item in preview.attachmentParts" class="mailtrap-attachment">
+            <a href="{{ host }}api/v1/messages/{{ preview.ID }}/mime/part/{{ item.index }}/download" class="btn btn-outline-primary">
               <i class="bi bi-download"></i>
               下载
             </a>
-            {{ tryDecodeMime(part.Headers["Content-Type"][0] || "Unknown type") }} ({{ part.Size }} bytes)
-            <br/>
-            <br/>
+            <span>{{ item.name }}</span>
+            <span class="text-muted">{{ item.type }}<span ng-if="item.size"> ({{ item.size }} bytes)</span></span>
           </div>
         </div>
       </div>

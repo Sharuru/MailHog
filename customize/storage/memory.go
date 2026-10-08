@@ -90,13 +90,11 @@ func (memory *InMemory) Search(kind, query string, start, limit int) (*data.Mess
 					break
 				}
 			}
-			if !doAppend {
-				if hdr, ok := m.Content.Headers["To"]; ok {
-					for _, to := range hdr {
-						if strings.Contains(strings.ToLower(to), query) {
-							doAppend = true
-							break
-						}
+			if !doAppend && m.Content != nil {
+				for _, key := range []string{"To", "Cc", "Bcc"} {
+					if headerFieldContains(m.Content.Headers, key, query) {
+						doAppend = true
+						break
 					}
 				}
 			}
@@ -104,28 +102,12 @@ func (memory *InMemory) Search(kind, query string, start, limit int) (*data.Mess
 			if strings.Contains(strings.ToLower(m.From.Mailbox+"@"+m.From.Domain), query) {
 				doAppend = true
 			}
-			if !doAppend {
-				if hdr, ok := m.Content.Headers["From"]; ok {
-					for _, from := range hdr {
-						if strings.Contains(strings.ToLower(from), query) {
-							doAppend = true
-							break
-						}
-					}
-				}
-			}
-		case "containing":
-			if strings.Contains(strings.ToLower(m.Content.Body), query) {
+			if !doAppend && m.Content != nil && headerFieldContains(m.Content.Headers, "From", query) {
 				doAppend = true
 			}
-			if !doAppend {
-				for _, hdr := range m.Content.Headers {
-					for _, v := range hdr {
-						if strings.Contains(strings.ToLower(v), query) {
-							doAppend = true
-						}
-					}
-				}
+		case "containing":
+			if messageMatchesQuery(m, query) {
+				doAppend = true
 			}
 		}
 

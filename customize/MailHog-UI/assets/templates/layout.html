@@ -26,7 +26,7 @@
               <label for="search-mail-input"><i class="bi bi-search"></i>&nbsp;搜索邮件</label>
               <div class="list-group" ng-if="searchText.length > 0 && keepopen" style="position:absolute; z-index: 100; margin-top: 0.4rem;">
                 <a href="#" ng-click="search('containing', searchText)" class="list-group-item">
-                  搜索 <strong>正文包含</strong> {{ searchText }} 的邮件 <span class="align-middle badge rounded-pill bg-danger">试作型</span>
+                  搜索 <strong>正文包含</strong> {{ searchText }} 的邮件
                 </a>
                 <a href="#" ng-click="search('to', searchText)" class="list-group-item">
                   搜索 <strong>收件人</strong> 为 {{ searchText }} 的邮件

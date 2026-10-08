@@ -9,5 +9,6 @@ build:
 	cp customize/data/message.go vendor/github.com/mailhog/data/message.go
 	cp customize/storage/maildir.go vendor/github.com/mailhog/storage/maildir.go
 	cp customize/storage/memory.go vendor/github.com/mailhog/storage/memory.go
+	cp customize/storage/searchtext.go vendor/github.com/mailhog/storage/searchtext.go
 	go build -o MailTrap
 	

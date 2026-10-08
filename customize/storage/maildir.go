@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -85,18 +84,34 @@ func (maildir *Maildir) Search(kind, query string, start, limit int) (*data.Mess
 
 		switch kind {
 		case "to":
+			hit := false
 			for _, t := range msg.To {
 				if strings.Contains(strings.ToLower(t.Mailbox+"@"+t.Domain), query) {
-					if start > matched {
-						matched++
-						break
-					}
-					filteredMessages = append(filteredMessages, *msg)
+					hit = true
 					break
 				}
 			}
+			if !hit && msg.Content != nil {
+				for _, key := range []string{"To", "Cc", "Bcc"} {
+					if headerFieldContains(msg.Content.Headers, key, query) {
+						hit = true
+						break
+					}
+				}
+			}
+			if hit {
+				if start > matched {
+					matched++
+					break
+				}
+				filteredMessages = append(filteredMessages, *msg)
+			}
 		case "from":
-			if strings.Contains(strings.ToLower(msg.From.Mailbox+"@"+msg.From.Domain), query) {
+			hit := strings.Contains(strings.ToLower(msg.From.Mailbox+"@"+msg.From.Domain), query)
+			if !hit && msg.Content != nil {
+				hit = headerFieldContains(msg.Content.Headers, "From", query)
+			}
+			if hit {
 				if start > matched {
 					matched++
 					break
@@ -104,8 +119,7 @@ func (maildir *Maildir) Search(kind, query string, start, limit int) (*data.Mess
 				filteredMessages = append(filteredMessages, *msg)
 			}
 		case "containing":
-			decodedContentBody, _ := base64.StdEncoding.DecodeString(msg.Content.Body)
-			if strings.Contains(strings.ToLower(string(decodedContentBody)), query) {
+			if messageMatchesQuery(msg, query) {
 				if start > matched {
 					matched++
 					break

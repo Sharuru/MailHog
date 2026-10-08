@@ -142,3 +142,51 @@ body {
     word-break: break-word;
     margin: 0;
 }
+
+.mailtrap-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.mailtrap-toolbar-title {
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.mailtrap-toolbar-side {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.mailtrap-list-table {
+    width: 100%;
+}
+
+.mailtrap-list-table td,
+.mailtrap-list-table th {
+    vertical-align: top;
+}
+
+.mailtrap-list-table td:nth-child(1),
+.mailtrap-list-table td:nth-child(2) {
+    overflow-wrap: break-word;
+}
+
+.mailtrap-col-when,
+.mailtrap-col-size {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.mailtrap-attachment {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}

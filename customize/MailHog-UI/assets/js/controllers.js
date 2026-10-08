@@ -221,30 +221,37 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
                                 message.From.Mailbox + "@" + message.From.Domain);
   }
 
+  $scope.addressEmail = function(value) {
+    var decoded = $scope.tryDecodeMime(value || "").trim();
+    var named = decoded.match(/<([^>]+)>/);
+    return (named ? named[1] : decoded).trim().toLowerCase();
+  }
+
   $scope.parseReceiver = function(message) {
-    var identifiedReceiver = []
-    var wholeReceiver = message.Raw.To;
+    var identified = {};
+    var wholeReceiver = (message.Raw && message.Raw.To) || [];
     message.pTo = [];
     message.pCc = [];
     message.pBcc = [];
-    if (message.Content.Headers["To"] && message.Content.Headers["To"][0]) {
-      const splittedTo = message.Content.Headers["To"][0].split(',');
-      splittedTo.forEach((value) => {
-        const trimmedValue = value.trim();
-        message.pTo.push(trimmedValue);
-        identifiedReceiver.push(trimmedValue)
-      });
-
-    }
-    if (message.Content.Headers["Cc"] && message.Content.Headers["Cc"][0]) {
-      const splittedCc = message.Content.Headers["Cc"][0].split(',');
-      splittedCc.forEach((value) => {
-        const trimmedValue = value.trim();
-        message.pCc.push(trimmedValue);
-        identifiedReceiver.push(trimmedValue)
+    function take(header, bucket) {
+      var raw = message.Content && message.Content.Headers && message.Content.Headers[header];
+      if (!raw || !raw[0]) {
+        return;
+      }
+      raw[0].split(',').forEach(function(value) {
+        var decoded = $scope.tryDecodeMime(value.trim());
+        if (!decoded) {
+          return;
+        }
+        bucket.push(decoded);
+        identified[$scope.addressEmail(decoded)] = true;
       });
     }
-    message.pBcc = [...new Set(wholeReceiver.filter(receiver => !identifiedReceiver.includes(receiver)))];
+    take("To", message.pTo);
+    take("Cc", message.pCc);
+    message.pBcc = wholeReceiver.filter(function(receiver) {
+      return receiver && !identified[$scope.addressEmail(receiver)];
+    });
   }
 
   $scope.getDisplayName = function(value) {
@@ -346,6 +353,14 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   $scope.refresh();
 
   $scope.showNewer = function() {
+    if ($scope.searching) {
+      $scope.searchStart -= parseInt($scope.itemsPerPage, 10) || 50;
+      if ($scope.searchStart < 0) {
+        $scope.searchStart = 0;
+      }
+      $scope.refreshSearch();
+      return;
+    }
     $scope.startIndex -= $scope.itemsPerPage;
     if($scope.startIndex < 0) {
       $scope.startIndex = 0
@@ -362,15 +377,26 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.showOlder = function() {
+    if ($scope.searching) {
+      $scope.searchStart += parseInt($scope.itemsPerPage, 10) || 50;
+      $scope.refreshSearch();
+      return;
+    }
     $scope.startIndex += $scope.itemsPerPage;
     $scope.refresh();
   }
 
   $scope.search = function(kind, text) {
+    if (!text || !String(text).trim()) {
+      return;
+    }
     $scope.searching = true;
+    $scope.preview = null;
     $scope.searchKind = kind;
     $scope.searchedText = text;
     $scope.searchText = "";
+    $scope.keepopen = false;
+    $scope.searchStart = 0;
     $scope.startSearchMessages = 0
     $scope.countSearchMessages = 0
     $scope.totalSearchMessages = 0
@@ -378,16 +404,113 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.refreshSearch = function() {
-    var url = $scope.host + 'api/v2/search?kind=' + $scope.searchKind + '&query=' + $scope.searchedText;
-    if($scope.startIndex > 0) {
-      url += "&start=" + $scope.startIndex;
-    }
+    var url = $scope.host + 'api/v2/search?kind=' + encodeURIComponent($scope.searchKind)
+      + '&query=' + encodeURIComponent($scope.searchedText)
+      + '&start=' + ($scope.searchStart || 0)
+      + '&limit=' + (parseInt($scope.itemsPerPage, 10) || 50);
     $http.get(url).success(function(data) {
-      $scope.searchMessages = data.items;
+      $scope.searchMessages = data.items || [];
       $scope.totalSearchMessages = data.total;
       $scope.countSearchMessages = data.count;
       $scope.startSearchMessages = data.start;
     });
+  }
+
+  $scope.closePreview = function() {
+    $scope.preview = null;
+  }
+
+  $scope.headerValue = function(part, name) {
+    if (!part || !part.Headers) {
+      return "";
+    }
+    var values = part.Headers[name];
+    if (!values) {
+      for (var key in part.Headers) {
+        if (key.toLowerCase() === name.toLowerCase()) {
+          values = part.Headers[key];
+          break;
+        }
+      }
+    }
+    return values && values.length ? values[0] : "";
+  }
+
+  $scope.isAttachmentPart = function(part) {
+    if (!part) {
+      return false;
+    }
+    var disposition = $scope.headerValue(part, "Content-Disposition").toLowerCase();
+    var contentType = $scope.headerValue(part, "Content-Type").toLowerCase();
+    var media = contentType.split(";")[0].trim();
+    if (media.indexOf("multipart/") === 0) {
+      return false;
+    }
+    if (disposition.indexOf("attachment") !== -1) {
+      return true;
+    }
+    if (disposition.indexOf("inline") !== -1) {
+      return false;
+    }
+    if (!media || media === "text/plain" || media === "text/html") {
+      return false;
+    }
+    return true;
+  }
+
+  $scope.attachmentName = function(part) {
+    var disposition = $scope.headerValue(part, "Content-Disposition");
+    var contentType = $scope.headerValue(part, "Content-Type");
+    var name = $scope.filenameParam(disposition) || $scope.filenameParam(contentType);
+    if (name) {
+      return $scope.tryDecodeMime(name);
+    }
+    return $scope.attachmentType(part);
+  }
+
+  $scope.filenameParam = function(value) {
+    if (!value) {
+      return "";
+    }
+    var encoded = value.match(/filename\*=(?:UTF-8|utf-8)''([^;]+)/);
+    if (encoded) {
+      try {
+        return decodeURIComponent(encoded[1]);
+      } catch (e) {
+        return encoded[1];
+      }
+    }
+    var quoted = value.match(/filename="([^"]+)"/i) || value.match(/name="([^"]+)"/i);
+    if (quoted) {
+      return quoted[1];
+    }
+    var bare = value.match(/filename=([^;]+)/i) || value.match(/name=([^;]+)/i);
+    return bare ? bare[1].trim() : "";
+  }
+
+  $scope.attachmentType = function(part) {
+    var contentType = $scope.headerValue(part, "Content-Type");
+    return contentType ? contentType.split(";")[0].trim() : "application/octet-stream";
+  }
+
+  $scope.collectAttachments = function(message) {
+    var found = [];
+    if (!message || !message.MIME || !message.MIME.Parts) {
+      return found;
+    }
+    for (var i = 0; i < message.MIME.Parts.length; i++) {
+      var part = message.MIME.Parts[i];
+      if (!$scope.isAttachmentPart(part)) {
+        continue;
+      }
+      found.push({
+        index: i,
+        name: $scope.attachmentName(part),
+        type: $scope.attachmentType(part),
+        size: part.Size
+      });
+    }
+    return found;
   }
 
   $scope.hasSelection = function() {
@@ -403,9 +526,13 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
       //reflow();
   	} else {
   		$scope.preview = message;
+      if (!message.attachmentParts) {
+        message.attachmentParts = $scope.collectAttachments(message);
+      }
       var e = $scope.startEvent("Loading message", message.ID, "glyphicon-download-alt");
 	  	$http.get($scope.host + 'api/v1/messages/' + message.ID).success(function(data) {
         $scope.parseReceiver(data);
+        data.attachmentParts = $scope.collectAttachments(data);
 	  	  $scope.cache[message.ID] = data;
 
         // FIXME
