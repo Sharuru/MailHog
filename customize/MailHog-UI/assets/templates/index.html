@@ -11,8 +11,8 @@
   </div>
 </script>
 
-<div class="mailtrap-split">
-  <section class="mailtrap-list">
+<div class="mailtrap-split" ng-class="{'is-full': mailFull, 'is-dragging': splitDrag}">
+  <section class="mailtrap-list" ng-style="{'width': listWidth + 'px'}">
     <div class="mailtrap-list-bar" ng-if="!searching">
       <button class="mailtrap-icon-btn" ng-click="refresh()" title="刷新">
         <i class="bi bi-arrow-clockwise"></i>
@@ -55,11 +55,14 @@
     </div>
   </section>
 
+  <div class="mailtrap-split-handle" ng-if="!mailFull" ng-mousedown="startSplitDrag($event)" role="separator" aria-orientation="vertical" title="拖动调整宽度"></div>
+
   <section class="mailtrap-detail" ng-if="preview">
     <div class="mailtrap-detail-bar">
       <span>正在查看 {{ listPosition() }}</span>
       <span class="mailtrap-detail-actions">
-        <button type="button" class="mailtrap-ghost" ng-click="deleteOne(preview)">删除这封</button>
+        <button type="button" class="mailtrap-ghost" ng-click="toggleMailFull()">{{ mailFull ? '退出全屏' : '全屏查看' }}</button>
+        <button type="button" class="mailtrap-ghost" ng-click="deleteOne(preview)">删除这份邮件</button>
         <a class="mailtrap-ghost" href="{{ host }}api/v1/messages/{{ preview.ID }}/download">下载 EML</a>
       </span>
     </div>

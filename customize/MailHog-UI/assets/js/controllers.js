@@ -113,6 +113,31 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
 
   $scope.jim = null
   $scope.previewTab = 'plain';
+  $scope.mailFull = false;
+  $scope.splitDrag = false;
+  $scope.listWidth = 700;
+
+  if(typeof(Storage) !== "undefined") {
+    var savedWidth = parseInt(localStorage.getItem("mailtrapListWidth"), 10);
+    if(savedWidth) {
+      $scope.listWidth = savedWidth;
+    }
+  }
+
+  function clampListWidth(width) {
+    var split = document.querySelector('.mailtrap-split');
+    var total = split ? split.clientWidth : window.innerWidth;
+    var min = 260;
+    var max = Math.max(min, total - 320);
+    width = width || min;
+    if(width < min) {
+      return min;
+    }
+    if(width > max) {
+      return max;
+    }
+    return Math.round(width);
+  }
 
   $scope.smtpmech = "NONE"
   $scope.selectedOutgoingSMTP = ""
@@ -230,7 +255,69 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
 
   $(window).on('resize.mailtrapPreview', function() {
     $scope.resizePreview();
+    if($scope.mailFull) {
+      return;
+    }
+    var next = clampListWidth($scope.listWidth);
+    if(next !== $scope.listWidth) {
+      $scope.$applyAsync(function() {
+        $scope.listWidth = next;
+      });
+    }
   });
+
+  $timeout(function() {
+    $scope.listWidth = clampListWidth($scope.listWidth);
+  });
+
+  document.addEventListener('keydown', function(event) {
+    if(event.key === 'Escape' && $scope.mailFull) {
+      $scope.$apply(function() {
+        $scope.toggleMailFull();
+      });
+    }
+  });
+
+  $scope.toggleMailFull = function() {
+    $scope.mailFull = !$scope.mailFull;
+    $timeout(function() {
+      $scope.resizePreview();
+    }, 0);
+  }
+
+  $scope.startSplitDrag = function(event) {
+    if($scope.mailFull) {
+      return;
+    }
+    event.preventDefault();
+    var startX = event.clientX;
+    var startW = $scope.listWidth;
+    $scope.splitDrag = true;
+    document.body.classList.add('mailtrap-split-dragging');
+
+    function move(e) {
+      var next = clampListWidth(startW + (e.clientX - startX));
+      $scope.$applyAsync(function() {
+        $scope.listWidth = next;
+      });
+    }
+
+    function up() {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      document.body.classList.remove('mailtrap-split-dragging');
+      $scope.$applyAsync(function() {
+        $scope.splitDrag = false;
+        if(typeof(Storage) !== "undefined") {
+          localStorage.setItem("mailtrapListWidth", String($scope.listWidth));
+        }
+      });
+      $scope.resizePreview();
+    }
+
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  }
 
   $scope.getSender = function(message) {
     return $scope.tryDecodeMime($scope.getDisplayName(message.Content.Headers["From"][0]) ||
