@@ -717,6 +717,16 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     return contentType ? contentType.split(";")[0].trim() : "application/octet-stream";
   }
 
+  $scope.attachmentExt = function(name) {
+    var base = (name || "").split(/[\\/]/).pop();
+    var dot = base.lastIndexOf(".");
+    if (dot <= 0 || dot === base.length - 1) {
+      return "FILE";
+    }
+    var ext = base.slice(dot + 1).replace(/[^A-Za-z0-9]+/g, "");
+    return ext ? ext.toUpperCase() : "FILE";
+  }
+
   $scope.collectAttachments = function(message) {
     var found = [];
     if (!message || !message.MIME || !message.MIME.Parts) {
@@ -727,9 +737,11 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
       if (!$scope.isAttachmentPart(part)) {
         continue;
       }
+      var name = $scope.attachmentName(part);
       found.push({
         index: i,
-        name: $scope.attachmentName(part),
+        name: name,
+        ext: $scope.attachmentExt(name),
         type: $scope.attachmentType(part),
         size: part.Size
       });

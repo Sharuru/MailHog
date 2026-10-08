@@ -91,7 +91,7 @@
       </div>
 
       <div class="mailtrap-file" ng-repeat="item in preview.attachmentParts">
-        <span class="mailtrap-pdf">{{ item.type.indexOf("pdf") >= 0 ? "PDF" : "FILE" }}</span>
+        <span class="mailtrap-pdf">{{ item.ext }}</span>
         <span>{{ item.name }}<small>{{ item.type }}<span ng-if="item.size"> · {{ item.size }} bytes</span></small></span>
         <a href="{{ host }}api/v1/messages/{{ preview.ID }}/mime/part/{{ item.index }}/download">下载</a>
       </div>
