@@ -15,6 +15,7 @@ require (
 	github.com/mailhog/mhsendmail v0.2.1-0.20160920204233-c097b3bc3fe7
 	github.com/mailhog/storage v1.0.1
 	golang.org/x/crypto v0.57.0
+	golang.org/x/text v0.42.0
 )
 
 require (

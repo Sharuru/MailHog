@@ -14,54 +14,28 @@
 
   </head>
   <body ng-controller="MailCtrl" ng-click="keepopen=false">
-    <nav class="navbar navbar-light bg-light mailtrap-nav">
-      <div class="mailtrap-nav-inner">
-        <a class="navbar-brand mailtrap-brand" href="#">
-          <img src="images/logo.png" alt="MailTrap">
-          <span>MailTrap</span>
-        </a>
-        <form class="mailtrap-search" role="search">
-          <div class="form-floating mailtrap-search-field">
-              <input ng-model="searchText" type="text" placeholder="搜索邮件" id="search-mail-input" ng-key-enter="search('containing', searchText)" class="form-control" autocomplete="off" ng-focus="keepopen=true" ng-click="$event.stopPropagation()">
-              <label for="search-mail-input"><i class="bi bi-search"></i>&nbsp;搜索邮件</label>
-              <div class="list-group" ng-if="searchText.length > 0 && keepopen" style="position:absolute; z-index: 100; margin-top: 0.4rem;">
-                <a href="#" ng-click="search('containing', searchText)" class="list-group-item">
-                  搜索 <strong>正文包含</strong> {{ searchText }} 的邮件 <span class="align-middle badge rounded-pill bg-danger">试作型</span>
-                </a>
-                <a href="#" ng-click="search('to', searchText)" class="list-group-item">
-                  搜索 <strong>收件人</strong> 为 {{ searchText }} 的邮件
-                </a>
-                <a href="#" ng-click="search('from', searchText);" class="list-group-item">
-                  搜索 <strong>发件人</strong> 为 {{ searchText }} 的邮件
-                </a>
-              </div>
-            </div>
-        </form>
-      </div>
-    </nav>
+    <header class="mailtrap-top">
+      <a class="mailtrap-brand" href="#" ng-click="backToInboxFirst()">
+        <img src="images/logo.png" alt="MailTrap">
+        <span>MailTrap<small>测试收件</small></span>
+      </a>
+      <form class="mailtrap-search" role="search" onsubmit="return false">
+        <div class="mailtrap-search-field" ng-click="$event.stopPropagation()">
+          <input ng-model="searchText" type="text" placeholder="搜索邮件" id="search-mail-input" ng-key-enter="search('containing', searchText)" autocomplete="off" ng-focus="keepopen=true">
+          <div class="mailtrap-search-menu" ng-if="searchText.length > 0 && keepopen">
+            <a href="#" ng-click="search('containing', searchText)">搜索 <strong>正文包含</strong> {{ searchText }} 的邮件</a>
+            <a href="#" ng-click="search('to', searchText)">搜索 <strong>收件人</strong> 为 {{ searchText }} 的邮件</a>
+            <a href="#" ng-click="search('from', searchText)">搜索 <strong>发件人</strong> 为 {{ searchText }} 的邮件</a>
+          </div>
+        </div>
+      </form>
+      <button type="button" class="mailtrap-top-btn" ng-class="{on: hasEventSource}" ng-click="toggleStream()">
+        {{ hasEventSource ? '实时刷新已开启' : '实时刷新已关闭' }}
+      </button>
+      <span class="mailtrap-version">v2.0.0</span>
+    </header>
 
     <div class="mailtrap-shell">
-      <div class="mailtrap-sidebar">
-        <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn {{ hasEventSource ? 'btn-primary' : 'btn-outline-primary' }}" ng-click="toggleStream()" >
-            <i class="bi {{ hasEventSource ? 'bi-check-circle-fill' : 'bi-pause-circle-fill' }}"></i>
-            {{ hasEventSource ? '实时刷新已开启' : '实时刷新已关闭' }}
-          </button>
-          <button type="button" class="btn btn-outline-primary" ng-click="backToInboxFirst()">
-            <i class="bi bi-save-fill"></i>
-            查看收件箱 <span class="badge bg-danger">{{totalMessages}}</span>
-          </button>
-          <button type="button" class="btn btn-outline-primary" ng-click="deleteAll()">
-            <i class="bi bi-eraser-fill"></i>
-            清空所有邮件
-          </button>
-        </div>
-
-        <div class="mailtrap-sidebar-mark">
-          <img src="{{ hasEventSource ? '/images/dld-run.gif' : '/images/dld-idle.gif' }}">
-          <div>MailTrap v1.1.9</div>
-        </div>
-      </div>
       <div class="mailtrap-stage">
         [: .Content :]
       </div>

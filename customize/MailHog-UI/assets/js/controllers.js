@@ -13,13 +13,13 @@ function fitMailFrame(frame) {
   if (!doc.getElementById('mailtrap-frame-fit')) {
     var style = doc.createElement('style');
     style.id = 'mailtrap-frame-fit';
-    style.textContent = 'html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}';
+    style.textContent = 'html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;}body>*:first-child{margin-top:0!important;}';
     (doc.head || doc.documentElement).appendChild(style);
   }
   if (!doc.documentElement.getAttribute('data-mailtrap-wheel')) {
     doc.documentElement.setAttribute('data-mailtrap-wheel', '1');
     doc.addEventListener('wheel', function(event) {
-      var stage = frame.closest('.mailtrap-stage');
+      var stage = frame.closest('.mailtrap-panes') || frame.closest('.mailtrap-detail-body') || frame.closest('.mailtrap-stage');
       if (!stage) {
         return;
       }
@@ -112,6 +112,32 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   $scope.totalSearchMessages = 0
 
   $scope.jim = null
+  $scope.previewTab = 'plain';
+  $scope.mailFull = false;
+  $scope.splitDrag = false;
+  $scope.listWidth = 700;
+
+  if(typeof(Storage) !== "undefined") {
+    var savedWidth = parseInt(localStorage.getItem("mailtrapListWidth"), 10);
+    if(savedWidth) {
+      $scope.listWidth = savedWidth;
+    }
+  }
+
+  function clampListWidth(width) {
+    var split = document.querySelector('.mailtrap-split');
+    var total = split ? split.clientWidth : window.innerWidth;
+    var min = 260;
+    var max = Math.max(min, total - 320);
+    width = width || min;
+    if(width < min) {
+      return min;
+    }
+    if(width > max) {
+      return max;
+    }
+    return Math.round(width);
+  }
 
   $scope.smtpmech = "NONE"
   $scope.selectedOutgoingSMTP = ""
@@ -132,6 +158,21 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     $scope.preview = null;
     $scope.searching = false;
   }
+  $scope.listPosition = function() {
+    var list = $scope.searching ? $scope.searchMessages : $scope.messages;
+    var total = $scope.searching ? $scope.totalSearchMessages : $scope.totalMessages;
+    var start = $scope.searching ? $scope.startSearchMessages : $scope.startMessages;
+    if (!$scope.preview || !list || !list.length) {
+      return "";
+    }
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].ID == $scope.preview.ID) {
+        return (start + i + 1) + " / " + (total || list.length);
+      }
+    }
+    return "";
+  }
+
   $scope.backToInboxFirst = function() {
     $scope.preview = null;
     $scope.startIndex = 0;
@@ -214,37 +255,194 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
 
   $(window).on('resize.mailtrapPreview', function() {
     $scope.resizePreview();
+    if($scope.mailFull) {
+      var lifted = document.querySelector('.mailtrap-detail.is-lifted');
+      if(lifted && !lifted.classList.contains('is-animating')) {
+        lifted.style.width = window.innerWidth + 'px';
+        lifted.style.height = window.innerHeight + 'px';
+      }
+      return;
+    }
+    var next = clampListWidth($scope.listWidth);
+    if(next !== $scope.listWidth) {
+      $scope.$applyAsync(function() {
+        $scope.listWidth = next;
+      });
+    }
   });
+
+  $timeout(function() {
+    $scope.listWidth = clampListWidth($scope.listWidth);
+  });
+
+  document.addEventListener('keydown', function(event) {
+    if(event.key === 'Escape' && $scope.mailFull) {
+      $scope.$apply(function() {
+        $scope.toggleMailFull();
+      });
+    }
+  });
+
+  function placeDetail(detail, box) {
+    detail.style.position = 'fixed';
+    detail.style.margin = '0';
+    detail.style.top = box.top + 'px';
+    detail.style.left = box.left + 'px';
+    detail.style.width = box.width + 'px';
+    detail.style.height = box.height + 'px';
+  }
+
+  function clearDetail(detail) {
+    detail.style.position = '';
+    detail.style.margin = '';
+    detail.style.top = '';
+    detail.style.left = '';
+    detail.style.width = '';
+    detail.style.height = '';
+    detail.style.transition = '';
+    detail.classList.remove('is-lifted');
+    detail.classList.remove('is-animating');
+  }
+
+  $scope.toggleMailFull = function() {
+    var detail = document.querySelector('.mailtrap-detail');
+    if(!detail || detail.classList.contains('is-animating')) {
+      return;
+    }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var motion = 'top .28s ease, left .28s ease, width .28s ease, height .28s ease';
+    detail.classList.add('is-lifted');
+    detail.classList.add('is-animating');
+
+    if(!$scope.mailFull) {
+      placeDetail(detail, detail.getBoundingClientRect());
+      detail.style.transition = 'none';
+      detail.offsetWidth;
+      detail.style.transition = reduce ? 'none' : motion;
+      placeDetail(detail, {top: 0, left: 0, width: window.innerWidth, height: window.innerHeight});
+      $scope.mailFull = true;
+    } else {
+      var split = document.querySelector('.mailtrap-split');
+      var list = document.querySelector('.mailtrap-list');
+      var handle = document.querySelector('.mailtrap-split-handle');
+      var splitRect = split.getBoundingClientRect();
+      var handleW = handle ? handle.getBoundingClientRect().width : 0;
+      var targetLeft = list.getBoundingClientRect().right + handleW;
+      var current = detail.getBoundingClientRect();
+      detail.style.transition = 'none';
+      placeDetail(detail, current);
+      detail.offsetWidth;
+      detail.style.transition = reduce ? 'none' : motion;
+      placeDetail(detail, {
+        top: splitRect.top,
+        left: targetLeft,
+        width: Math.max(0, splitRect.right - targetLeft),
+        height: splitRect.height
+      });
+      $scope.mailFull = false;
+    }
+
+    var settled = false;
+    var timer = 0;
+    var finish = function() {
+      if(settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(timer);
+      detail.removeEventListener('transitionend', done);
+      detail.classList.remove('is-animating');
+      if(!$scope.mailFull) {
+        clearDetail(detail);
+      } else {
+        detail.style.transition = '';
+      }
+      $scope.resizePreview();
+    };
+    function done(event) {
+      if(event.target !== detail || event.propertyName !== 'width') {
+        return;
+      }
+      finish();
+    }
+    if(reduce) {
+      finish();
+      return;
+    }
+    timer = window.setTimeout(finish, 360);
+    detail.addEventListener('transitionend', done);
+  }
+
+  $scope.startSplitDrag = function(event) {
+    if($scope.mailFull) {
+      return;
+    }
+    event.preventDefault();
+    var startX = event.clientX;
+    var startW = $scope.listWidth;
+    $scope.splitDrag = true;
+    document.body.classList.add('mailtrap-split-dragging');
+
+    function move(e) {
+      var next = clampListWidth(startW + (e.clientX - startX));
+      $scope.$applyAsync(function() {
+        $scope.listWidth = next;
+      });
+    }
+
+    function up() {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      document.body.classList.remove('mailtrap-split-dragging');
+      $scope.$applyAsync(function() {
+        $scope.splitDrag = false;
+        if(typeof(Storage) !== "undefined") {
+          localStorage.setItem("mailtrapListWidth", String($scope.listWidth));
+        }
+      });
+      $scope.resizePreview();
+    }
+
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  }
 
   $scope.getSender = function(message) {
     return $scope.tryDecodeMime($scope.getDisplayName(message.Content.Headers["From"][0]) ||
                                 message.From.Mailbox + "@" + message.From.Domain);
   }
 
+  $scope.addressEmail = function(value) {
+    var decoded = $scope.tryDecodeMime(value || "").trim();
+    var named = decoded.match(/<([^>]+)>/);
+    return (named ? named[1] : decoded).trim().toLowerCase();
+  }
+
   $scope.parseReceiver = function(message) {
-    var identifiedReceiver = []
-    var wholeReceiver = message.Raw.To;
+    var identified = {};
+    var wholeReceiver = (message.Raw && message.Raw.To) || [];
     message.pTo = [];
     message.pCc = [];
     message.pBcc = [];
-    if (message.Content.Headers["To"] && message.Content.Headers["To"][0]) {
-      const splittedTo = message.Content.Headers["To"][0].split(',');
-      splittedTo.forEach((value) => {
-        const trimmedValue = value.trim();
-        message.pTo.push(trimmedValue);
-        identifiedReceiver.push(trimmedValue)
-      });
-
-    }
-    if (message.Content.Headers["Cc"] && message.Content.Headers["Cc"][0]) {
-      const splittedCc = message.Content.Headers["Cc"][0].split(',');
-      splittedCc.forEach((value) => {
-        const trimmedValue = value.trim();
-        message.pCc.push(trimmedValue);
-        identifiedReceiver.push(trimmedValue)
+    function take(header, bucket) {
+      var raw = message.Content && message.Content.Headers && message.Content.Headers[header];
+      if (!raw || !raw[0]) {
+        return;
+      }
+      raw[0].split(',').forEach(function(value) {
+        var decoded = $scope.tryDecodeMime(value.trim());
+        if (!decoded) {
+          return;
+        }
+        bucket.push(decoded);
+        identified[$scope.addressEmail(decoded)] = true;
       });
     }
-    message.pBcc = [...new Set(wholeReceiver.filter(receiver => !identifiedReceiver.includes(receiver)))];
+    take("To", message.pTo);
+    take("Cc", message.pCc);
+    message.pBcc = wholeReceiver.filter(function(receiver) {
+      return receiver && !identified[$scope.addressEmail(receiver)];
+    });
   }
 
   $scope.getDisplayName = function(value) {
@@ -346,6 +544,14 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   $scope.refresh();
 
   $scope.showNewer = function() {
+    if ($scope.searching) {
+      $scope.searchStart -= parseInt($scope.itemsPerPage, 10) || 50;
+      if ($scope.searchStart < 0) {
+        $scope.searchStart = 0;
+      }
+      $scope.refreshSearch();
+      return;
+    }
     $scope.startIndex -= $scope.itemsPerPage;
     if($scope.startIndex < 0) {
       $scope.startIndex = 0
@@ -362,15 +568,26 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.showOlder = function() {
+    if ($scope.searching) {
+      $scope.searchStart += parseInt($scope.itemsPerPage, 10) || 50;
+      $scope.refreshSearch();
+      return;
+    }
     $scope.startIndex += $scope.itemsPerPage;
     $scope.refresh();
   }
 
   $scope.search = function(kind, text) {
+    if (!text || !String(text).trim()) {
+      return;
+    }
     $scope.searching = true;
+    $scope.preview = null;
     $scope.searchKind = kind;
     $scope.searchedText = text;
     $scope.searchText = "";
+    $scope.keepopen = false;
+    $scope.searchStart = 0;
     $scope.startSearchMessages = 0
     $scope.countSearchMessages = 0
     $scope.totalSearchMessages = 0
@@ -378,34 +595,162 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   }
 
   $scope.refreshSearch = function() {
-    var url = $scope.host + 'api/v2/search?kind=' + $scope.searchKind + '&query=' + $scope.searchedText;
-    if($scope.startIndex > 0) {
-      url += "&start=" + $scope.startIndex;
-    }
+    var url = $scope.host + 'api/v2/search?kind=' + encodeURIComponent($scope.searchKind)
+      + '&query=' + encodeURIComponent($scope.searchedText)
+      + '&start=' + ($scope.searchStart || 0)
+      + '&limit=' + (parseInt($scope.itemsPerPage, 10) || 50);
     $http.get(url).success(function(data) {
-      $scope.searchMessages = data.items;
+      $scope.searchMessages = data.items || [];
       $scope.totalSearchMessages = data.total;
       $scope.countSearchMessages = data.count;
       $scope.startSearchMessages = data.start;
     });
   }
 
+  $scope.closePreview = function() {
+    $scope.preview = null;
+  }
+
+  $scope.headerValue = function(part, name) {
+    if (!part || !part.Headers) {
+      return "";
+    }
+    var values = part.Headers[name];
+    if (!values) {
+      for (var key in part.Headers) {
+        if (key.toLowerCase() === name.toLowerCase()) {
+          values = part.Headers[key];
+          break;
+        }
+      }
+    }
+    return values && values.length ? values[0] : "";
+  }
+
+  $scope.isAttachmentPart = function(part) {
+    if (!part) {
+      return false;
+    }
+    var disposition = $scope.headerValue(part, "Content-Disposition").toLowerCase();
+    var contentType = $scope.headerValue(part, "Content-Type").toLowerCase();
+    var media = contentType.split(";")[0].trim();
+    if (media.indexOf("multipart/") === 0) {
+      return false;
+    }
+    if (disposition.indexOf("attachment") !== -1) {
+      return true;
+    }
+    if (disposition.indexOf("inline") !== -1) {
+      return false;
+    }
+    if (!media || media === "text/plain" || media === "text/html") {
+      return false;
+    }
+    return true;
+  }
+
+  $scope.attachmentName = function(part) {
+    var disposition = $scope.headerValue(part, "Content-Disposition");
+    var contentType = $scope.headerValue(part, "Content-Type");
+    var name = $scope.filenameParam(disposition) || $scope.filenameParam(contentType);
+    if (name) {
+      return $scope.tryDecodeMime(name);
+    }
+    return $scope.attachmentType(part);
+  }
+
+  $scope.filenameParam = function(value) {
+    if (!value) {
+      return "";
+    }
+    var encoded = value.match(/filename\*=(?:UTF-8|utf-8)''([^;]+)/);
+    if (encoded) {
+      try {
+        return decodeURIComponent(encoded[1]);
+      } catch (e) {
+        return encoded[1];
+      }
+    }
+    var quoted = value.match(/filename="([^"]+)"/i) || value.match(/name="([^"]+)"/i);
+    if (quoted) {
+      return quoted[1];
+    }
+    var bare = value.match(/filename=([^;]+)/i) || value.match(/name=([^;]+)/i);
+    return bare ? bare[1].trim() : "";
+  }
+
+  $scope.attachmentType = function(part) {
+    var contentType = $scope.headerValue(part, "Content-Type");
+    return contentType ? contentType.split(";")[0].trim() : "application/octet-stream";
+  }
+
+  $scope.collectAttachments = function(message) {
+    var found = [];
+    if (!message || !message.MIME || !message.MIME.Parts) {
+      return found;
+    }
+    for (var i = 0; i < message.MIME.Parts.length; i++) {
+      var part = message.MIME.Parts[i];
+      if (!$scope.isAttachmentPart(part)) {
+        continue;
+      }
+      found.push({
+        index: i,
+        name: $scope.attachmentName(part),
+        type: $scope.attachmentType(part),
+        size: part.Size
+      });
+    }
+    return found;
+  }
+
   $scope.hasSelection = function() {
     return $(".messages :checked").length > 0 ? true : false;
   }
 
+  $scope.resetPaneScroll = function() {
+    $timeout(function() {
+      var panes = document.querySelector('.mailtrap-panes');
+      if (panes) {
+        panes.scrollTop = 0;
+      }
+    }, 0);
+  }
+
+  $scope.showPreviewTab = function(tab) {
+    $scope.previewTab = tab;
+    $scope.resetPaneScroll();
+    if (tab === 'html') {
+      $timeout(function() {
+        $scope.resizePreview();
+      }, 0);
+    }
+  }
+
+  $scope.resetPreviewTab = function(message) {
+    $scope.previewTab = $scope.hasHTML(message) ? 'html' : 'plain';
+  }
+
   $scope.selectMessage = function(message) {
+    $scope.resetPaneScroll();
     $timeout(function(){
       $scope.resizePreview();
     }, 0);
   	if($scope.cache[message.ID]) {
   		$scope.preview = $scope.cache[message.ID];
+      $scope.resetPreviewTab($scope.preview);
       //reflow();
   	} else {
   		$scope.preview = message;
+      $scope.resetPreviewTab(message);
+      var autoTab = $scope.previewTab;
+      if (!message.attachmentParts) {
+        message.attachmentParts = $scope.collectAttachments(message);
+      }
       var e = $scope.startEvent("Loading message", message.ID, "glyphicon-download-alt");
 	  	$http.get($scope.host + 'api/v1/messages/' + message.ID).success(function(data) {
         $scope.parseReceiver(data);
+        data.attachmentParts = $scope.collectAttachments(data);
 	  	  $scope.cache[message.ID] = data;
 
         // FIXME
@@ -435,6 +780,9 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
         }
 	      data.previewHTML = $sce.trustAsHtml(h);
   		  $scope.preview = data;
+        if ($scope.previewTab == autoTab) {
+          $scope.resetPreviewTab(data);
+        }
   		  preview = $scope.cache[message.ID];
         //reflow();
         e.done();
@@ -589,6 +937,17 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
 
   $scope.deleteAll = function() {
   	$('#confirm-delete-all').modal('show');
+  }
+
+  window.mailtrapClearAll = function() {
+    var root = document.querySelector('[ng-controller="MailCtrl"]') || document.body;
+    var scope = angular.element(root).scope();
+    if (!scope) {
+      return;
+    }
+    scope.$apply(function() {
+      scope.deleteAll();
+    });
   }
 
   $scope.releaseOne = function(message) {
