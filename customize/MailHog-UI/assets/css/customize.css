@@ -7,6 +7,138 @@ html {
     font-family: "customeizeFont" !important;
 }
 
+html,
+body {
+    height: 100%;
+}
+
 body {
     font-family: "customeizeFont" !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: 0;
+}
+
+.mailtrap-nav {
+    flex: 0 0 auto;
+    padding: 0;
+}
+
+.mailtrap-nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+    padding: 0.35rem 0.75rem;
+}
+
+.mailtrap-brand {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.mailtrap-brand img {
+    height: 40px;
+    width: auto;
+}
+
+.mailtrap-brand span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.mailtrap-search {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+}
+
+.mailtrap-search-field {
+    position: relative;
+    width: min(100%, 36rem);
+}
+
+.mailtrap-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.mailtrap-sidebar {
+    flex: 0 0 14rem;
+    width: 14rem;
+    min-width: 14rem;
+    min-height: 0;
+    padding: 0.5rem 0.75rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.mailtrap-sidebar .btn-group-vertical {
+    width: 100%;
+}
+
+.mailtrap-sidebar .btn {
+    white-space: nowrap;
+    text-align: left;
+}
+
+.mailtrap-sidebar-mark {
+    margin-top: auto;
+    padding-top: 1rem;
+    opacity: 0.2;
+    text-align: center;
+    font-size: small;
+    pointer-events: none;
+}
+
+.mailtrap-stage {
+    flex: 1 1 auto;
+    min-width: 12rem;
+    min-height: 0;
+    overflow: auto;
+    padding: 0.5rem 0.75rem 1.5rem 0.25rem;
+}
+
+.mailtrap-meta {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.mailtrap-meta th {
+    width: 5.5rem;
+    white-space: nowrap;
+    vertical-align: top;
+    padding-right: 0.75rem;
+}
+
+.mailtrap-meta td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.mailtrap-html-frame {
+    display: block;
+    width: 100%;
+    border: 0;
+    overflow: hidden;
+}
+
+.mailtrap-plain {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    margin: 0;
 }

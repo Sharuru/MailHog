@@ -8,5 +8,6 @@ build:
 	cp customize/MailHog-Server/config/config.go vendor/github.com/mailhog/MailHog-Server/config/config.go
 	cp customize/data/message.go vendor/github.com/mailhog/data/message.go
 	cp customize/storage/maildir.go vendor/github.com/mailhog/storage/maildir.go
+	cp customize/storage/memory.go vendor/github.com/mailhog/storage/memory.go
 	go build -o MailTrap
 	

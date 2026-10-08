@@ -14,17 +14,15 @@
 
   </head>
   <body ng-controller="MailCtrl" ng-click="keepopen=false">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container-fluid">
-        <div class="col-2">
-          <a class="navbar-brand" href="#"><img src="images/logo.png" height="50" alt="MailTrap" class="d-inline-block">
-            &nbsp;&nbsp;<span class="align-middle fw-bolder fs-4">MailTrap</span>
-          </a>
-        </div>
-        <div class="col-10">
-          <form class="d-flex" role="search">
-            <div class=" form-floating col-6">
-              <input ng-model="searchText" type="text" placeholder="搜索邮件" id="search-mail-input" ng-key-enter="search('containing', searchText)" class="form-control" autocomplete="off" id="search" ng-focus="keepopen=true" ng-click="$event.stopPropagation()">
+    <nav class="navbar navbar-light bg-light mailtrap-nav">
+      <div class="mailtrap-nav-inner">
+        <a class="navbar-brand mailtrap-brand" href="#">
+          <img src="images/logo.png" alt="MailTrap">
+          <span>MailTrap</span>
+        </a>
+        <form class="mailtrap-search" role="search">
+          <div class="form-floating mailtrap-search-field">
+              <input ng-model="searchText" type="text" placeholder="搜索邮件" id="search-mail-input" ng-key-enter="search('containing', searchText)" class="form-control" autocomplete="off" ng-focus="keepopen=true" ng-click="$event.stopPropagation()">
               <label for="search-mail-input"><i class="bi bi-search"></i>&nbsp;搜索邮件</label>
               <div class="list-group" ng-if="searchText.length > 0 && keepopen" style="position:absolute; z-index: 100; margin-top: 0.4rem;">
                 <a href="#" ng-click="search('containing', searchText)" class="list-group-item">
@@ -38,37 +36,35 @@
                 </a>
               </div>
             </div>
-          </form>
-        </div>
+        </form>
       </div>
     </nav>
 
-    <div class="container-fluid">
-      <div class="row mt-2">
-        <div class="col-2">
-          <div class="btn-group-vertical" role="group" style="width: 100%;">
-            <button type="button" class="btn {{ hasEventSource ? 'btn-primary' : 'btn-outline-primary' }}" ng-click="toggleStream()" >
-              <i class="bi {{ hasEventSource ? 'bi-check-circle-fill' : 'bi-pause-circle-fill' }}"></i>
-              {{ hasEventSource ? '实时刷新已开启' : '实时刷新已关闭' }}
-            </button>
-            <button type="button" class="btn btn-outline-primary" ng-click="backToInboxFirst()">
-              <i class="bi bi-save-fill"></i>
-              查看收件箱 <span class="badge bg-danger">{{totalMessages}}</span>
-            </button>
-            <button type="button" class="btn btn-outline-primary" ng-click="deleteAll()">
-              <i class="bi bi-eraser-fill"></i>
-              清空所有邮件
-            </button>
-          </div>
-    
-          <div style="bottom: 2rem; position: fixed; opacity: 0.2; ">
-            <img src="{{ hasEventSource ? '/images/dld-run.gif' : '/images/dld-idle.gif' }}">
-            <div style=" text-align: center; font-size: small;">MailTrap v1.1.9</div>
-          </div>
+    <div class="mailtrap-shell">
+      <div class="mailtrap-sidebar">
+        <div class="btn-group-vertical" role="group">
+          <button type="button" class="btn {{ hasEventSource ? 'btn-primary' : 'btn-outline-primary' }}" ng-click="toggleStream()" >
+            <i class="bi {{ hasEventSource ? 'bi-check-circle-fill' : 'bi-pause-circle-fill' }}"></i>
+            {{ hasEventSource ? '实时刷新已开启' : '实时刷新已关闭' }}
+          </button>
+          <button type="button" class="btn btn-outline-primary" ng-click="backToInboxFirst()">
+            <i class="bi bi-save-fill"></i>
+            查看收件箱 <span class="badge bg-danger">{{totalMessages}}</span>
+          </button>
+          <button type="button" class="btn btn-outline-primary" ng-click="deleteAll()">
+            <i class="bi bi-eraser-fill"></i>
+            清空所有邮件
+          </button>
         </div>
-        <div class="col-10">
-          [: .Content :]
+
+        <div class="mailtrap-sidebar-mark">
+          <img src="{{ hasEventSource ? '/images/dld-run.gif' : '/images/dld-idle.gif' }}">
+          <div>MailTrap v1.1.9</div>
         </div>
+      </div>
+      <div class="mailtrap-stage">
+        [: .Content :]
+      </div>
     </div>
 
 

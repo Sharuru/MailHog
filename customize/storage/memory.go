@@ -1,36 +1,72 @@
 package storage
 
 import (
-	"encoding/base64"
 	"errors"
+	"log"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/mailhog/data"
 )
 
+const defaultMemoryMaxMessages = 5000
+
 // InMemory is an in memory storage backend
 type InMemory struct {
 	MessageIDIndex map[string]int
 	Messages       []*data.Message
+	maxMessages    int
 	mu             sync.Mutex
 }
 
-// CreateInMemory creates a new in memory storage backend
+// CreateInMemory creates a new in memory storage backend.
+// MH_MEMORY_MAX_MESSAGES overrides how many messages are kept (default 5000).
+// Messages beyond that are dropped oldest-first. The store is still empty after a restart.
 func CreateInMemory() *InMemory {
+	maxMessages := memoryMaxMessages()
+	log.Printf("In-memory storage will keep the most recent %d messages", maxMessages)
 	return &InMemory{
 		MessageIDIndex: make(map[string]int),
 		Messages:       make([]*data.Message, 0),
+		maxMessages:    maxMessages,
 	}
 }
 
-// Store stores a message and returns its storage ID
+func memoryMaxMessages() int {
+	raw := strings.TrimSpace(os.Getenv("MH_MEMORY_MAX_MESSAGES"))
+	if raw == "" {
+		return defaultMemoryMaxMessages
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n <= 0 {
+		log.Printf("Invalid MH_MEMORY_MAX_MESSAGES %q, using %d", raw, defaultMemoryMaxMessages)
+		return defaultMemoryMaxMessages
+	}
+	return n
+}
+
+// Store stores a message and returns its storage ID.
+// When the configured cap is exceeded, the oldest messages are dropped.
 func (memory *InMemory) Store(m *data.Message) (string, error) {
 	memory.mu.Lock()
 	defer memory.mu.Unlock()
 	memory.Messages = append(memory.Messages, m)
 	memory.MessageIDIndex[string(m.ID)] = len(memory.Messages) - 1
+	memory.trimLocked()
 	return string(m.ID), nil
+}
+
+func (memory *InMemory) trimLocked() {
+	if memory.maxMessages <= 0 || len(memory.Messages) <= memory.maxMessages {
+		return
+	}
+	memory.Messages = memory.Messages[len(memory.Messages)-memory.maxMessages:]
+	memory.MessageIDIndex = make(map[string]int, len(memory.Messages))
+	for i, m := range memory.Messages {
+		memory.MessageIDIndex[string(m.ID)] = i
+	}
 }
 
 // Count returns the number of stored messages
@@ -79,10 +115,23 @@ func (memory *InMemory) Search(kind, query string, start, limit int) (*data.Mess
 				}
 			}
 		case "containing":
-			decodedContentBody, _ := base64.StdEncoding.DecodeString(m.Content.Body)
-			if strings.Contains(strings.ToLower(string(decodedContentBody)), query) {
-				filteredMessages = append(filteredMessages, m)
+			if strings.Contains(strings.ToLower(m.Content.Body), query) {
+				doAppend = true
 			}
+			if !doAppend {
+				for _, hdr := range m.Content.Headers {
+					for _, v := range hdr {
+						if strings.Contains(strings.ToLower(v), query) {
+							doAppend = true
+						}
+					}
+				}
+			}
+		}
+
+		if doAppend {
+			filteredMessages = append(filteredMessages, m)
+		}
 	}
 
 	var messages = make([]data.Message, 0)
