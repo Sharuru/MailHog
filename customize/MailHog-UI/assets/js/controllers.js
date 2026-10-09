@@ -332,6 +332,12 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     return moment(instant).locale('zh-cn');
   }
 
+  // List rows and the reading-pane fallback share this clock. Moment formats
+  // the instant in the browser's local timezone, including seconds.
+  $scope.absoluteTime = function(timestamp) {
+    return $scope.getMoment($scope.date(timestamp)).format("YYYY-MM-DD HH:mm:ss");
+  }
+
   $scope.backToInbox = function() {
     $scope.preview = null;
     $scope.searching = false;

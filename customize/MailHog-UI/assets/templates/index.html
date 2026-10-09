@@ -7,7 +7,7 @@
       <div class="mailtrap-row-line" ng-repeat="cc in message.pCc"><span class="k c">抄送人</span>{{ cc }}</div>
       <div class="mailtrap-row-line" ng-repeat="bcc in message.pBcc"><span class="k b">密送人</span>{{ bcc }}</div>
     </div>
-    <div class="mailtrap-row-meta">{{ getMoment(date(message.Created)).fromNow() }}<br>{{ fileSize(message.Raw.Data.length) }}</div>
+    <div class="mailtrap-row-meta">{{ absoluteTime(message.Created) }}<br>{{ fileSize(message.Raw.Data.length) }}</div>
   </div>
 </script>
 
@@ -73,7 +73,7 @@
         <div class="lab">发件人</div>
         <div>{{ tryDecodeMime(preview.Content.Headers["From"][0] || preview.From.Mailbox + "@" + preview.From.Domain) }}</div>
         <div class="lab">时间</div>
-        <div>{{ (preview.Content.Headers["Date"] && preview.Content.Headers["Date"][0]) ? tryDecodeMime(preview.Content.Headers["Date"][0]) : getMoment(date(preview.Created)).format("YYYY-MM-DD HH:mm:ss") }}</div>
+        <div>{{ (preview.Content.Headers["Date"] && preview.Content.Headers["Date"][0]) ? tryDecodeMime(preview.Content.Headers["Date"][0]) : absoluteTime(preview.Created) }}</div>
         <div class="lab" ng-if="preview.pTo.length">收件人</div>
         <div ng-if="preview.pTo.length">{{ (preview.pTo || []).join("，") }}</div>
         <div class="lab">大小</div>
