@@ -332,10 +332,43 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     return moment(instant).locale('zh-cn');
   }
 
-  // List rows and the reading-pane fallback share this clock. Moment formats
-  // the instant in the browser's local timezone, including seconds.
+  // Every clock the UI shows uses this format. Moment formats the instant in
+  // the browser's local timezone, including seconds. It is not UTC and not a
+  // zone named on the message.
   $scope.absoluteTime = function(timestamp) {
     return $scope.getMoment($scope.date(timestamp)).format("YYYY-MM-DD HH:mm:ss");
+  }
+
+  // Date headers often end with a comment such as (JST) or (CST). That comment
+  // is not an offset. Strip it, parse the remaining instant, and format it
+  // with absoluteTime. If the header is missing or unparseable, use Created
+  // so the raw header is never shown.
+  $scope.messageTime = function(message) {
+    var raw = $scope.headerDate(message);
+    if (raw) {
+      var cleaned = String($scope.tryDecodeMime(raw)).replace(/\s*\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+      var instant = new Date(cleaned);
+      if (!isNaN(instant.getTime())) {
+        return $scope.absoluteTime(instant);
+      }
+    }
+    return message ? $scope.absoluteTime(message.Created) : "";
+  }
+
+  $scope.headerDate = function(message) {
+    var headers = message && message.Content && message.Content.Headers;
+    if (!headers) {
+      return "";
+    }
+    if (headers["Date"] && headers["Date"][0]) {
+      return headers["Date"][0];
+    }
+    for (var key in headers) {
+      if (key.toLowerCase() === "date" && headers[key] && headers[key][0]) {
+        return headers[key][0];
+      }
+    }
+    return "";
   }
 
   $scope.backToInbox = function() {
