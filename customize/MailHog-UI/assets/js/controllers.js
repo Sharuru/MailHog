@@ -323,23 +323,6 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     if(typeof(Notification) !== "undefined") {
       Notification.requestPermission();
     }
-    // Bootstrap sets aria-hidden after the fade. Focus must already be outside.
-    var clearModal = document.getElementById('confirm-delete-all');
-    if(clearModal) {
-      $(clearModal).on('show.bs.modal', function() {
-        $scope.releaseClearModalFocus();
-        clearModal.removeAttribute('aria-hidden');
-      });
-      $(clearModal).on('shown.bs.modal', function() {
-        clearModal.removeAttribute('aria-hidden');
-        if(clearModal.contains(document.activeElement) && document.activeElement !== clearModal) {
-          clearModal.focus();
-        }
-      });
-      $(clearModal).on('hide.bs.modal', function() {
-        $scope.releaseClearModalFocus();
-      });
-    }
   });
 
   // Date#toString() appends a parenthetical timezone name. Moment warns on that
@@ -349,17 +332,10 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     return moment(instant).locale('zh-cn');
   }
 
-  $scope.releaseClearModalFocus = function() {
-    var modal = document.getElementById('confirm-delete-all');
-    var active = document.activeElement;
-    if(!modal || !active || !modal.contains(active)) {
-      return;
-    }
-    active.blur();
-    var next = document.querySelector('.mailtrap-brand');
-    if(next) {
-      next.focus();
-    }
+  // List rows and the reading-pane fallback share this clock. Moment formats
+  // the instant in the browser's local timezone, including seconds.
+  $scope.absoluteTime = function(timestamp) {
+    return $scope.getMoment($scope.date(timestamp)).format("YYYY-MM-DD HH:mm:ss");
   }
 
   $scope.backToInbox = function() {
@@ -1178,21 +1154,6 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
   	return new Date(timestamp);
   };
 
-  $scope.deleteAll = function() {
-  	$('#confirm-delete-all').modal('show');
-  }
-
-  window.mailtrapClearAll = function() {
-    var root = document.querySelector('[ng-controller="MailCtrl"]') || document.body;
-    var scope = angular.element(root).scope();
-    if (!scope) {
-      return;
-    }
-    scope.$apply(function() {
-      scope.deleteAll();
-    });
-  }
-
   $scope.releaseOne = function(message) {
     $scope.releasing = message;
 
@@ -1242,16 +1203,6 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
 	source += "\n";
 	source += message.Content.Body;
 	return source;
-  }
-
-  $scope.deleteAllConfirm = function() {
-  	$('#confirm-delete-all').modal('hide');
-    var e = $scope.startEvent("Deleting all messages", null, "glyphicon-remove-circle");
-  	$http.delete($scope.host + 'api/v1/messages').success(function() {
-  		$scope.refresh();
-  		$scope.preview = null;
-      e.done()
-  	});
   }
 
   $scope.deleteOne = function(message) {
