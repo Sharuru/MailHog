@@ -1,0 +1,65 @@
+# Example nginx in front of MailTrap.
+#
+# The app sets Cache-Control and ETag itself. This file forwards those headers
+# to the browser and caches font files in nginx, so a new browser does not
+# download the face from the app every time.
+#
+# Sarasa Mono is not content-hashed. customize.css is served at
+# /css/customize.css and references ./fonts/sarasa-mono-j-regular.ttf, so the
+# face URL is:
+#
+#   /css/fonts/sarasa-mono-j-regular.ttf
+#
+# The icon fonts use the same directory:
+#
+#   /css/fonts/bootstrap-icons.woff2
+#   /css/fonts/bootstrap-icons.woff
+#
+# proxy_cache_path belongs in the http context. nginx does not create the
+# cache directory; create it before reload or nginx will not start:
+#
+#   sudo mkdir -p /var/cache/nginx/mailtrap
+#   sudo chown www-data:www-data /var/cache/nginx/mailtrap
+#
+# Use the nginx user instead of www-data where that is the account nginx runs as.
+
+proxy_cache_path /var/cache/nginx/mailtrap levels=1:2 keys_zone=mailtrap_fonts:10m max_size=200m inactive=7d use_temp_path=off;
+
+upstream mailtrap {
+    server 127.0.0.1:8025;
+}
+
+server {
+    listen 80;
+    server_name _;
+
+    # Font files only. CSS and JS keep the shorter Cache-Control from the app
+    # and are not stored in this cache.
+    location /css/fonts/ {
+        proxy_pass http://mailtrap;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_cache mailtrap_fonts;
+        proxy_cache_key $scheme$proxy_host$request_uri;
+        # Used when the upstream response has no explicit freshness of its own.
+        # A Cache-Control max-age from MailTrap still wins.
+        proxy_cache_valid 200 7d;
+
+        # Pass the app's validators through. Do not hide them, and do not
+        # ignore Cache-Control: the face URL has no content hash, so the
+        # response must not be marked immutable here either.
+        proxy_pass_header Cache-Control;
+        proxy_pass_header ETag;
+    }
+
+    location / {
+        proxy_pass http://mailtrap;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass_header Cache-Control;
+        proxy_pass_header ETag;
+    }
+}

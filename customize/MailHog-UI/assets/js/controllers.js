@@ -13,7 +13,7 @@ function fitMailFrame(frame) {
   if (!doc.getElementById('mailtrap-frame-fit')) {
     var style = doc.createElement('style');
     style.id = 'mailtrap-frame-fit';
-    style.textContent = 'html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;}body>*:first-child{margin-top:0!important;}';
+    style.textContent = 'html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;}body>*:first-child{margin-top:0!important;}mark.mailtrap-hit{background:#fde68a!important;color:inherit!important;padding:0 1px;}';
     (doc.head || doc.documentElement).appendChild(style);
   }
   if (!doc.documentElement.getAttribute('data-mailtrap-wheel')) {
@@ -35,6 +35,181 @@ function fitMailFrame(frame) {
     height = Math.max(height, body.scrollHeight || 0, body.offsetHeight || 0);
   }
   frame.style.height = Math.max(height, 1) + 'px';
+}
+
+// highlightOutsideMarkup wraps case-insensitive matches of query in visible
+// text. Tags, attributes, comments, and the contents of script/style stay
+// byte-for-byte so a hit cannot land inside markup.
+function highlightOutsideMarkup(html, query) {
+  query = String(query || "");
+  if (!html || !query) {
+    return html || "";
+  }
+  var lowerQuery = query.toLowerCase();
+  var out = "";
+  var i = 0;
+  while (i < html.length) {
+    if (html.charAt(i) === "<") {
+      var end = endOfMarkup(html, i);
+      var tag = html.slice(i, end);
+      out += tag;
+      var info = markupTagName(tag);
+      if (info && !info.closing && (info.name === "script" || info.name === "style")) {
+        var closeEnd = skipRawTextElement(html, end, info.name);
+        out += html.slice(end, closeEnd);
+        i = closeEnd;
+        continue;
+      }
+      i = end;
+      continue;
+    }
+    var next = html.indexOf("<", i);
+    if (next < 0) {
+      next = html.length;
+    }
+    out += highlightVisibleText(html.slice(i, next), lowerQuery);
+    i = next;
+  }
+  return out;
+}
+
+function endOfMarkup(html, start) {
+  if (html.substr(start, 4) === "<!--") {
+    var commentEnd = html.indexOf("-->", start + 4);
+    return commentEnd < 0 ? html.length : commentEnd + 3;
+  }
+  var quote = "";
+  for (var i = start + 1; i < html.length; i++) {
+    var c = html.charAt(i);
+    if (quote) {
+      if (c === quote) {
+        quote = "";
+      }
+      continue;
+    }
+    if (c === "\"" || c === "'") {
+      quote = c;
+      continue;
+    }
+    if (c === ">") {
+      return i + 1;
+    }
+  }
+  return html.length;
+}
+
+function markupTagName(tag) {
+  var matched = /^<\s*(\/?)\s*([a-zA-Z0-9:-]+)/.exec(tag);
+  if (!matched) {
+    return null;
+  }
+  return {closing: matched[1] === "/", name: matched[2].toLowerCase()};
+}
+
+function skipRawTextElement(html, from, name) {
+  var lower = html.toLowerCase();
+  var close = "</" + name;
+  var i = from;
+  while (i < html.length) {
+    var at = lower.indexOf(close, i);
+    if (at < 0) {
+      return html.length;
+    }
+    var end = endOfMarkup(html, at);
+    var info = markupTagName(html.slice(at, end));
+    if (info && info.closing && info.name === name) {
+      return end;
+    }
+    i = at + 1;
+  }
+  return html.length;
+}
+
+function decodeHtmlEntity(entity) {
+  var named = {
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": "\"",
+    "&#39;": "'",
+    "&apos;": "'",
+    "&nbsp;": " "
+  };
+  var lower = entity.toLowerCase();
+  if (Object.prototype.hasOwnProperty.call(named, lower)) {
+    return named[lower];
+  }
+  var decimal = /^&#(\d+);$/.exec(entity);
+  if (decimal) {
+    return entityCodePoint(parseInt(decimal[1], 10));
+  }
+  var hex = /^&#x([0-9a-f]+);$/i.exec(entity);
+  if (hex) {
+    return entityCodePoint(parseInt(hex[1], 16));
+  }
+  return null;
+}
+
+function entityCodePoint(codePoint) {
+  if (!isFinite(codePoint) || codePoint < 0 || codePoint > 0x10FFFF) {
+    return null;
+  }
+  try {
+    return String.fromCodePoint(codePoint);
+  } catch (e) {
+    return null;
+  }
+}
+
+function decodeTextChunk(raw) {
+  var display = "";
+  var starts = [];
+  var i = 0;
+  while (i < raw.length) {
+    if (raw.charAt(i) === "&") {
+      var semi = raw.indexOf(";", i + 1);
+      if (semi > i && semi - i <= 32) {
+        var entity = raw.slice(i, semi + 1);
+        var ch = decodeHtmlEntity(entity);
+        if (ch) {
+          for (var k = 0; k < ch.length; k++) {
+            starts.push(i);
+          }
+          display += ch;
+          i = semi + 1;
+          continue;
+        }
+      }
+    }
+    starts.push(i);
+    display += raw.charAt(i);
+    i++;
+  }
+  starts.push(raw.length);
+  return {display: display, starts: starts};
+}
+
+function highlightVisibleText(raw, lowerQuery) {
+  var decoded = decodeTextChunk(raw);
+  var haystack = decoded.display.toLowerCase();
+  if (!lowerQuery || haystack.indexOf(lowerQuery) < 0) {
+    return raw;
+  }
+  var out = "";
+  var cursor = 0;
+  while (cursor < decoded.display.length) {
+    var at = haystack.indexOf(lowerQuery, cursor);
+    if (at < 0) {
+      out += raw.slice(decoded.starts[cursor]);
+      break;
+    }
+    out += raw.slice(decoded.starts[cursor], decoded.starts[at]);
+    out += '<mark class="mailtrap-hit" style="background:#fde68a;color:inherit;padding:0 1px">'
+      + raw.slice(decoded.starts[at], decoded.starts[at + lowerQuery.length])
+      + "</mark>";
+    cursor = at + lowerQuery.length;
+  }
+  return out;
 }
 
 mailtrapApp.directive('targetBlank', function(){
@@ -783,6 +958,7 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     }, 0);
   	if($scope.cache[message.ID]) {
   		$scope.preview = $scope.cache[message.ID];
+      $scope.paintPreviewHTML($scope.preview);
       $scope.resetPreviewTab($scope.preview);
       //reflow();
   	} else {
@@ -823,7 +999,8 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
 	  pat = str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
           h = h.replace(new RegExp(pat, 'g'), data.$cidMap[c])
         }
-	      data.previewHTML = $sce.trustAsHtml(h);
+        data.previewHTMLRaw = h;
+        $scope.paintPreviewHTML(data);
   		  $scope.preview = data;
         if ($scope.previewTab == autoTab) {
           $scope.resetPreviewTab(data);
@@ -885,10 +1062,31 @@ mailtrapApp.controller('MailCtrl', function ($scope, $http, $sce, $timeout) {
     return content;
   }
 
+  // The active search phrase, or "" when the open message did not come from search.
+  $scope.highlightQuery = function() {
+    if (!$scope.searching) {
+      return "";
+    }
+    return String($scope.searchedText || "").trim();
+  }
+
+  $scope.paintPreviewHTML = function(message) {
+    if (!message || message.previewHTMLRaw == null) {
+      return;
+    }
+    var query = $scope.highlightQuery();
+    var html = query ? highlightOutsideMarkup(message.previewHTMLRaw, query) : message.previewHTMLRaw;
+    message.previewHTML = $sce.trustAsHtml(html);
+  }
+
   $scope.formatMessagePlain = function(message) {
     var body = $scope.getMessagePlain(message);
     var escaped = $scope.escapeHtml(body);
     var formatted = escaped.replace(/(https?:\/\/)([-[\]A-Za-z0-9._~:/?#@!$()*+,;=%]|&amp;|&#39;)+/g, '<a href="$&" target="_blank">$&</a>');
+    var query = $scope.highlightQuery();
+    if (query) {
+      formatted = highlightOutsideMarkup(formatted, query);
+    }
     return $sce.trustAsHtml(formatted);
   }
 

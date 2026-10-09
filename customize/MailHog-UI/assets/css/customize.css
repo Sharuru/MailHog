@@ -501,6 +501,12 @@ body.mailtrap-split-dragging iframe {
     margin: 0;
 }
 
+.mailtrap-plain mark.mailtrap-hit {
+    background: #fde68a;
+    color: inherit;
+    padding: 0 1px;
+}
+
 .mailtrap-source {
     margin: 0;
     max-width: 100%;
